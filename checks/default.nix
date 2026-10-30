@@ -6,6 +6,7 @@
 #                            GitHub's arm runners have no KVM)
 #   override-<name>          every overrides/<name>.nix builds
 #   llm-agents-override-<name> every llm-agents-overrides/<name>.nix builds
+#   llm-agents-ocr-git-path  ocr wrapper puts the pinned git first on PATH
 #   the rest                 repo-wide lints in this directory
 {
   pkgs,
@@ -132,6 +133,7 @@ packageChecks
   no-nixpkgs-clash = callCheck ./no-nixpkgs-clash.nix;
   overrides-target-exists = callCheck ./overrides-target-exists.nix;
   llm-agents-target-exists = callCheck ./llm-agents-target-exists.nix;
+  llm-agents-ocr-git-path = callCheck ./llm-agents-ocr-git-path.nix;
   overlay = callCheck ./overlay.nix;
   ast-grep = callCheck ./ast-grep.nix;
   format = callCheck ./format.nix;
