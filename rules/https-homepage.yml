@@ -1,0 +1,13 @@
+id: https-homepage
+language: nix
+severity: error
+message: >-
+  Use an https:// URL for `homepage`.
+rule:
+  kind: string_expression
+  regex: '^"http://'
+  inside:
+    kind: binding
+    has:
+      field: attrpath
+      regex: '^homepage$'

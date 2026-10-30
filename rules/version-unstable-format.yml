@@ -1,0 +1,14 @@
+id: version-unstable-format
+language: nix
+severity: error
+message: >-
+  Unreleased snapshots use `version = "0-unstable-YYYY-MM-DD"`, the form
+  nixpkgs and nix-update expect.
+rule:
+  kind: string_expression
+  regex: '^"unstable-'
+  inside:
+    kind: binding
+    has:
+      field: attrpath
+      regex: '^version$'

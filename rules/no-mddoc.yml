@@ -1,0 +1,27 @@
+id: no-mddoc
+language: nix
+severity: error
+message: >-
+  `lib.mdDoc` is deprecated and a no-op: option descriptions are Markdown
+  already. Pass the string directly.
+rule:
+  kind: variable_expression
+  regex: '^mdDoc$'
+  any:
+    - inside:
+        kind: apply_expression
+        field: function
+    - inside:
+        kind: select_expression
+        field: attrpath
+        stopBy: end
+---
+id: no-mddoc-select
+language: nix
+severity: error
+message: >-
+  `lib.mdDoc` is deprecated and a no-op: option descriptions are Markdown
+  already. Pass the string directly.
+rule:
+  kind: select_expression
+  regex: '^lib\.mdDoc$'

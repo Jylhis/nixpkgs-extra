@@ -1,0 +1,14 @@
+# Adapted from numtide/llm-agents.nix (MIT), rev 177efbe, rules/no-unpinned-rev.yml.
+id: no-unpinned-rev
+language: nix
+severity: error
+message: >-
+  Do not pin sources to a branch name. Branches move, so the fetch breaks the moment upstream pushes. Pin a tag (`tag = ...`) or a full commit hash (`rev = ...`).
+rule:
+  kind: string_expression
+  regex: '^"(main|master|HEAD|trunk|develop)"$'
+  inside:
+    kind: binding
+    has:
+      field: attrpath
+      regex: '^(rev|ref)$'

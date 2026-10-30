@@ -1,0 +1,11 @@
+id: no-with-lib
+language: nix
+severity: error
+message: >-
+  Don't use `with lib;`: it hides where names come from and breaks static
+  analysis. Write `lib.<name>` or `inherit (lib) ...`.
+rule:
+  kind: with_expression
+  has:
+    field: environment
+    regex: '^lib$'
