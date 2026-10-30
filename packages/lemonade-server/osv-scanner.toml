@@ -1,0 +1,17 @@
+# osv-scanner suppressions for the lockfiles in this directory. Each entry
+# names one advisory and expires on its review date.
+
+[[IgnoredVulns]]
+id = "GHSA-238p-pmpm-9mq7"
+ignoreUntil = 2027-01-30
+reason = "katex 0.16.47 in web-app-package-lock.json; upstream package.json pins ^0.16.25 (fix is 0.18.2)"
+
+[[IgnoredVulns]]
+id = "GHSA-f23m-r3pf-42rh"
+ignoreUntil = 2027-01-30
+reason = "lodash 4.17.23 in web-app-package-lock.json; upstream package.json pins ~4.17.21 (fix is 4.18.0)"
+
+[[IgnoredVulns]]
+id = "GHSA-r5fr-rjxr-66jc"
+ignoreUntil = 2027-01-30
+reason = "lodash 4.17.23 in web-app-package-lock.json; upstream package.json pins ~4.17.21 (fix is 4.18.0)"
