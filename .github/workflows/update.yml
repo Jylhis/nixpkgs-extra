@@ -1,0 +1,75 @@
+name: update
+
+# Bumps every package that sets passthru.updateScript (nix-update-script),
+# one pull request per package. PRs opened with GITHUB_TOKEN don't trigger
+# the check workflow; re-run it from the PR, or switch to a GitHub App token.
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: Space-separated packages to update (empty for all)
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.list.outputs.packages }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
+      - id: list
+        env:
+          ONLY: ${{ github.event.inputs.packages }}
+        run: |
+          # [{ name, args }] where args are the updateScript's nix-update flags.
+          packages=$(nix eval --json .#packages.x86_64-linux --apply '
+            ps: builtins.filter (x: x != null) (builtins.attrValues (builtins.mapAttrs (name: p:
+              let cmd = p.updateScript.command or p.updateScript or null; in
+              if builtins.isList cmd && cmd != [ ] then
+                { inherit name; args = builtins.concatStringsSep " " (builtins.tail cmd); }
+              else null) ps))')
+          if [ -n "$ONLY" ]; then
+            packages=$(jq -c --arg only "$ONLY" '[.[] | select(.name as $n | $only | split(" ") | index($n))]' <<<"$packages")
+          fi
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+
+  update:
+    needs: discover
+    if: needs.discover.outputs.packages != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.discover.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
+      - name: nix-update
+        id: update
+        env:
+          NAME: ${{ matrix.package.name }}
+          ARGS: ${{ matrix.package.args }}
+        run: |
+          # shellcheck disable=SC2086 # ARGS is a flag list
+          nix run nixpkgs#nix-update -- --flake $ARGS "$NAME"
+          nix build --print-build-logs ".#$NAME"
+          nix run .#update-docs
+          echo "version=$(nix eval --raw ".#$NAME.version")" >> "$GITHUB_OUTPUT"
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: update/${{ matrix.package.name }}
+          delete-branch: true
+          commit-message: "${{ matrix.package.name }}: update to ${{ steps.update.outputs.version }}"
+          title: "${{ matrix.package.name }}: update to ${{ steps.update.outputs.version }}"
+          body: Automated update by nix-update.
+          labels: dependencies,automated

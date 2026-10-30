@@ -1,0 +1,30 @@
+name: Package issue
+description: A package or module is broken or out of date
+title: "<package>: "
+labels: ["bug"]
+body:
+  - type: input
+    id: package
+    attributes:
+      label: Package or module
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System
+      placeholder: x86_64-linux
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: nixpkgs-extra revision
+      placeholder: output of `nix flake metadata` or the commit you pinned
+  - type: textarea
+    id: details
+    attributes:
+      label: What happens
+      description: Command, error output, expected behaviour.
+    validations:
+      required: true

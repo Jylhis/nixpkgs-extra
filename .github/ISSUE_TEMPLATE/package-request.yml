@@ -1,0 +1,39 @@
+name: Package request
+description: Ask for a package or module to be added
+title: "package request: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Packages here are ones the maintainers use. For anything else, a pull
+        request that packages and maintains it is welcome; see AGENTS.md.
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      placeholder: e.g. some-tool
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Project URL
+      placeholder: https://github.com/owner/repo
+    validations:
+      required: true
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Will you package and maintain it?
+      options:
+        - "Yes, I'll open a PR and maintain it"
+        - "Yes, but I need help with Nix"
+        - "No"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What do you use it for, and why not upstream nixpkgs?
