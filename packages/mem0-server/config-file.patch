@@ -1,0 +1,20 @@
+--- a/server/main.py
++++ b/server/main.py
+@@ -1,4 +1,5 @@
+ import asyncio
++import json
+ import logging
+ import os
+ import time
+@@ -138,6 +139,11 @@
+     "history_db_path": HISTORY_DB_PATH,
+ }
+ 
++# MEM0_CONFIG_FILE: JSON file holding the full mem0 MemoryConfig dict.
++_CONFIG_FILE = os.environ.get("MEM0_CONFIG_FILE")
++if _CONFIG_FILE:
++    with open(_CONFIG_FILE) as _fh:
++        DEFAULT_CONFIG = json.load(_fh)
+ 
+ set_session_factory(SessionLocal)
+ initialize_state(DEFAULT_CONFIG)
