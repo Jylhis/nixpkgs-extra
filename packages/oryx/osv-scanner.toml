@@ -1,0 +1,23 @@
+# osv-scanner suppressions for the lockfiles in this directory, read by
+# osv-scanner. Each entry names one advisory and expires on
+# its review date.
+
+[[IgnoredVulns]]
+id = "GHSA-qwgh-2vcv-g2f7"
+ignoreUntil = 2027-01-30
+reason = "block-buffer 0.10.4 in the vendored oryx Cargo.lock; upstream locks it"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0190"
+ignoreUntil = 2027-01-30
+reason = "anyhow 1.0.100 in the vendored oryx Cargo.lock; upstream locks it"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0253"
+ignoreUntil = 2027-01-30
+reason = "lru 0.16.3 in the vendored oryx Cargo.lock; upstream locks it"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0097"
+ignoreUntil = 2027-01-30
+reason = "rand 0.9.2 in rust-std-Cargo.lock, the nightly toolchain's own std lock; tracks the pinned nightly"

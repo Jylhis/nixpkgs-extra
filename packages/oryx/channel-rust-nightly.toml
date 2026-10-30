@@ -1,0 +1,78 @@
+# Trimmed copy of https://static.rust-lang.org/dist/2025-11-15/channel-rust-nightly.toml
+# (sha256-lCQKETTx7RnvVmgTugMcPhx/PaDr7L45CH0AZZJYlqc= untrimmed). Only the
+# cargo, rustc, rust-std and rust-src packages for linux hosts are kept, which is what
+# package.nix asks the toolchain for; it lets fenix.fromManifestFile evaluate
+# without import-from-derivation. Re-trim when bumping the nightly.
+manifest-version = "2"
+date = "2025-11-15"
+[pkg.cargo]
+version = "0.94.0-nightly (2d4fa1395 2025-11-12)"
+git_commit_hash = "b6d7ff3aa71e48e2901b0900f8b5d98126b537ed"
+
+[pkg.cargo.target.aarch64-unknown-linux-gnu]
+available = true
+url = "https://static.rust-lang.org/dist/2025-11-15/cargo-nightly-aarch64-unknown-linux-gnu.tar.gz"
+hash = "deeb76a220e55c7d70d48b2a659b9f41d86a1593fc91b2dd0656940835d47ba2"
+xz_url = "https://static.rust-lang.org/dist/2025-11-15/cargo-nightly-aarch64-unknown-linux-gnu.tar.xz"
+xz_hash = "7a30a7cd714de5cb3ee4743af4d829ae32ec3845d792de4606cda1faff5a1285"
+
+[pkg.cargo.target.x86_64-unknown-linux-gnu]
+available = true
+url = "https://static.rust-lang.org/dist/2025-11-15/cargo-nightly-x86_64-unknown-linux-gnu.tar.gz"
+hash = "624aad29481bfcf36056f1d81c9b1982100f90533b5091cdb453e0dafcb22c4e"
+xz_url = "https://static.rust-lang.org/dist/2025-11-15/cargo-nightly-x86_64-unknown-linux-gnu.tar.xz"
+xz_hash = "d290403671d9cc827677118db7011acb15e0f21121c94e954cefea5af0c1c397"
+
+[pkg.rust-src]
+version = "1.93.0-nightly (b6d7ff3aa 2025-11-14)"
+git_commit_hash = "b6d7ff3aa71e48e2901b0900f8b5d98126b537ed"
+
+[pkg.rust-src.target."*"]
+available = true
+url = "https://static.rust-lang.org/dist/2025-11-15/rust-src-nightly.tar.gz"
+hash = "ea5c09b8c1c14f939222621b65b1d374a5f275c957c44a12589adb4241e0eb07"
+xz_url = "https://static.rust-lang.org/dist/2025-11-15/rust-src-nightly.tar.xz"
+xz_hash = "f54b21e6b726e9443f27708e14680aa1eebd6820a0d84060204051450f70ac57"
+
+[pkg.rustc]
+version = "1.93.0-nightly (b6d7ff3aa 2025-11-14)"
+git_commit_hash = "b6d7ff3aa71e48e2901b0900f8b5d98126b537ed"
+
+[pkg.rustc.target.aarch64-unknown-linux-gnu]
+available = true
+url = "https://static.rust-lang.org/dist/2025-11-15/rustc-nightly-aarch64-unknown-linux-gnu.tar.gz"
+hash = "c04b54c883c0b1f30ff6ee59edbe25d51d2f3d5ff6920d942a73ad42dc310c01"
+xz_url = "https://static.rust-lang.org/dist/2025-11-15/rustc-nightly-aarch64-unknown-linux-gnu.tar.xz"
+xz_hash = "91b28d30d84668578e2dc63597b5e33f7c9457ae4f8d44ea8bd8c9b838459275"
+
+[pkg.rustc.target.x86_64-unknown-linux-gnu]
+available = true
+url = "https://static.rust-lang.org/dist/2025-11-15/rustc-nightly-x86_64-unknown-linux-gnu.tar.gz"
+hash = "93c59bc88347399935e9e0130643e9177cbd30795985213e50cfeac4015db308"
+xz_url = "https://static.rust-lang.org/dist/2025-11-15/rustc-nightly-x86_64-unknown-linux-gnu.tar.xz"
+xz_hash = "bb8703831e5f2bae40bed80dcc1108c9f72d9ad981bfdf229090625c3f91af53"
+
+[pkg.rust-std]
+version = "1.93.0-nightly (b6d7ff3aa 2025-11-14)"
+git_commit_hash = "b6d7ff3aa71e48e2901b0900f8b5d98126b537ed"
+
+
+[pkg.rust-std.target.aarch64-unknown-linux-gnu]
+available = true
+url = "https://static.rust-lang.org/dist/2025-11-15/rust-std-nightly-aarch64-unknown-linux-gnu.tar.gz"
+hash = "0ff81c8f2d684db68427ccca6fedf502791a5c80f263fff32546886914ef8c5a"
+xz_url = "https://static.rust-lang.org/dist/2025-11-15/rust-std-nightly-aarch64-unknown-linux-gnu.tar.xz"
+xz_hash = "b4c5f92ebd218e9f74c2d1e38e2c91645ddc9ce4cea14473fc1b26b39b35eb10"
+
+
+[pkg.rust-std.target.x86_64-unknown-linux-gnu]
+available = true
+url = "https://static.rust-lang.org/dist/2025-11-15/rust-std-nightly-x86_64-unknown-linux-gnu.tar.gz"
+hash = "fb9eb4f924973c663249d7a5f32b92476d6dc93619c4ebf3efeb36e463ab0df7"
+xz_url = "https://static.rust-lang.org/dist/2025-11-15/rust-std-nightly-x86_64-unknown-linux-gnu.tar.xz"
+xz_hash = "897af1a921d6a733f952317bd5db0469844c9ad725ac9b757952a1d24d310a0f"
+
+[profiles]
+complete = ["rustc", "cargo", "rust-std", "rust-mingw", "rust-docs", "rustfmt-preview", "clippy-preview", "rust-analyzer-preview", "rust-src", "llvm-tools-preview", "rust-analysis", "miri-preview", "rustc-codegen-cranelift-preview", "rustc-dev"]
+default = ["rustc", "cargo", "rust-std", "rust-mingw", "rust-docs", "rustfmt-preview", "clippy-preview"]
+minimal = ["rustc", "cargo", "rust-std", "rust-mingw"]
