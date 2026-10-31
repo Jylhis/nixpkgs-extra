@@ -1,7 +1,7 @@
 # Stricter rules for packages meant to move upstream. A package opts in with
 # `passthru.upstream = [ "nixpkgs" ]`, `[ "llm-agents" ]` or both, and must
-# then meet what that project's CI and review ask for (TODO.md, "Upstream
-# rules"); everything else only needs the universal checks.
+# then meet what that project's CI and review ask for (docs/upstreaming.md);
+# everything else only needs the universal checks.
 { pkgs, repo, ... }:
 let
   inherit (pkgs) lib;

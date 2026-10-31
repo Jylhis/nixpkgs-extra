@@ -165,8 +165,10 @@ The `llm-agents.*` entries replace packages of
 
 ## Contributing
 
-[AGENTS.md](AGENTS.md) covers layout and conventions. Run `nix fmt`,
-`nix run .#update-docs` and `nix flake check` before opening a pull request.
+[AGENTS.md](AGENTS.md) covers layout and conventions, and
+[docs/upstreaming.md](docs/upstreaming.md) the nixpkgs and llm-agents.nix
+rules this repo checks. Run `nix fmt`, `nix run .#update-docs` and
+`nix flake check` before opening a pull request.
 
 ## License
 

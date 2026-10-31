@@ -3,6 +3,8 @@
 nixpkgs-extra is a set of Nix packages and NixOS / Home Manager modules that
 are not (yet) in nixpkgs. Everything here is meant to be generic: usable on
 any machine, upstreamable to nixpkgs without a rewrite.
+[docs/upstreaming.md](docs/upstreaming.md) lists the upstream rules, the
+check that enforces each one here, and the submission steps.
 
 ## Layout
 
@@ -41,6 +43,7 @@ any machine, upstreamable to nixpkgs without a rewrite.
 - Run all checks: `nix flake check`.
 - Format: `nix fmt`.
 - Regenerate docs after changing packages or options: `nix run .#update-docs`.
+- Lint commit messages: `nix run .#lint-commits -- main`.
 - Update a package: `nix run nixpkgs#nix-update -- --flake <name>`.
 
 ## Naming
@@ -157,3 +160,5 @@ seen from the evaluated config.
 
 Small, imperative subject (`oryx: 0.8.0 -> 0.9.0`, `opensnitch-baseline: ...`),
 body says why. Run `nix fmt` and `nix flake check` first.
+`nix run .#lint-commits -- main` checks subjects against nixpkgs' rules: no
+Conventional Commits prefixes, so `docs:` only for a change under `docs/`.
