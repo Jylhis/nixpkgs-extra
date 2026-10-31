@@ -138,6 +138,8 @@ packageChecks
   module-options = callCheck ./module-options.nix;
   parse = callCheck ./parse.nix;
   upstream-targets = callCheck ./upstream-targets.nix;
+  # Builds lint-commits, running its Go tests.
+  lint-commits = import ../scripts/lint-commits/package.nix { inherit pkgs repo; };
   no-nixpkgs-clash = callCheck ./no-nixpkgs-clash.nix;
   overrides-target-exists = callCheck ./overrides-target-exists.nix;
   llm-agents-target-exists = callCheck ./llm-agents-target-exists.nix;

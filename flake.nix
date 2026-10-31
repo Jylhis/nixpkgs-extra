@@ -91,6 +91,15 @@
       formatter = eachSystem (system: import ./scripts/formatter.nix { pkgs = pkgsFor.${system}; });
 
       apps = eachSystem (system: {
+        lint-commits = {
+          type = "app";
+          program = lib.getExe (
+            import ./scripts/lint-commits/package.nix {
+              pkgs = pkgsFor.${system};
+              repo = repoFor.${system};
+            }
+          );
+        };
         update-docs = {
           type = "app";
           program = lib.getExe (
