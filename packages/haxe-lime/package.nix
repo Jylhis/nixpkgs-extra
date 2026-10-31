@@ -9,6 +9,7 @@
 # 4.1.15 unless overlays.overrides is applied.
 {
   lib,
+  callPackage,
   fetchFromGitHub,
   nix-update-script,
   coreutils,
@@ -139,6 +140,7 @@ buildHaxeLib rec {
 
   passthru = {
     inherit haxeDeps;
+    tests.hello = callPackage ./tests/hello { };
     category = "Developer tools";
     updateScript = nix-update-script { };
   };

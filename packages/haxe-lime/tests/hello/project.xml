@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+	<meta title="Lime Hello" package="org.example.limehello" version="1.0.0" />
+	<app main="Main" path="Export" file="LimeHello" />
+	<source path="Source" />
+	<haxelib name="lime" />
+</project>
