@@ -1,0 +1,18 @@
+id: no-optional-list-literal
+language: nix
+severity: error
+message: >-
+  `lib.optional c [ x ]` returns `[ [ x ] ]`. Use `lib.optionals c [ x ]` for
+  a list, or `lib.optional c x` for one element (nixpkgs-vet NPV-171).
+rule:
+  kind: apply_expression
+  all:
+    - has:
+        field: argument
+        kind: list_expression
+    - has:
+        field: function
+        kind: apply_expression
+        has:
+          field: function
+          regex: '^(lib\.)?optional$'

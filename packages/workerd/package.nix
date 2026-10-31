@@ -4,7 +4,7 @@
 #
 # UPDATE: keep `version` in lockstep with the workerd nixpkgs' wrangler expects
 # (registry.npmjs.org/wrangler/<ver> -> `dependencies.workerd`), then refresh
-# all four platform hashes; nix-update only does the current platform, hence
+# all three platform hashes; nix-update only does the current platform, hence
 # `--version=skip`.
 {
   lib,
@@ -24,10 +24,6 @@ let
       aarch64-linux = {
         pkg = "workerd-linux-arm64";
         hash = "sha256-4uEP+5VrrGa4EAiPpDmCRiSv2sPrjeanpE5De49nzpk=";
-      };
-      x86_64-darwin = {
-        pkg = "workerd-darwin-64";
-        hash = "sha256-mbfLKCzeYEcuSr8NwoQfI3IiTlnW2OtvzloOBDpJYq4=";
       };
       aarch64-darwin = {
         pkg = "workerd-darwin-arm64";
@@ -88,7 +84,6 @@ stdenv.mkDerivation {
     platforms = [
       "x86_64-linux"
       "aarch64-linux"
-      "x86_64-darwin"
       "aarch64-darwin"
     ];
   };

@@ -15,7 +15,9 @@
   fetchurl,
   python3,
   autoPatchelfHook,
-  callPackage,
+  arize-phoenix-client,
+  arize-phoenix-evals,
+  arize-phoenix-otel,
   nix-update-script,
 }:
 
@@ -304,9 +306,9 @@ let
   };
 
   phoenixLibs = {
-    client = callPackage ../arize-phoenix-client/package.nix { python3Packages = py; };
-    otel = callPackage ../arize-phoenix-otel/package.nix { python3Packages = py; };
-    evals = callPackage ../arize-phoenix-evals/package.nix { python3Packages = py; };
+    client = arize-phoenix-client.override { python3Packages = py; };
+    otel = arize-phoenix-otel.override { python3Packages = py; };
+    evals = arize-phoenix-evals.override { python3Packages = py; };
   };
 in
 py.buildPythonApplication (finalAttrs: {

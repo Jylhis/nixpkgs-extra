@@ -56,14 +56,14 @@ let
     hxp
   ];
 in
-buildHaxeLib rec {
+buildHaxeLib (finalAttrs: {
   libname = "lime";
   version = "8.3.2";
 
   src = fetchFromGitHub {
     owner = "openfl";
     repo = "lime";
-    tag = version;
+    tag = finalAttrs.version;
     fetchSubmodules = true;
     hash = "sha256-wpLLNKml8lxJFeNTCwTbEOqq/2YJwZiB9WToLgVzx5w=";
   };
@@ -105,7 +105,7 @@ buildHaxeLib rec {
   '';
 
   postInstall = ''
-    libdir=$out/lib/haxe/lime/${withCommas version}
+    libdir=$out/lib/haxe/lime/${withCommas finalAttrs.version}
     patchelf --add-rpath ${lib.makeLibraryPath runtimeLibs} "$libdir/${ndllDir}/lime.ndll"
 
     # Single-directory repository the `lime` wrapper points HAXELIB_PATH at.
@@ -148,7 +148,7 @@ buildHaxeLib rec {
   meta = {
     description = "Foundational Haxe framework for cross-platform native and web development";
     homepage = "https://lime.openfl.org/";
-    changelog = "https://github.com/openfl/lime/blob/${version}/CHANGELOG.md";
+    changelog = "https://github.com/openfl/lime/blob/${finalAttrs.version}/CHANGELOG.md";
     license = lib.licenses.mit;
     # templates/ and dependencies/ still carry upstream's prebuilt binaries for
     # other targets (Windows exes, Android jars, hxswfml.n, svg.n).
@@ -161,4 +161,4 @@ buildHaxeLib rec {
     platforms = [ "x86_64-linux" ];
     maintainers = with lib.maintainers; [ jylhis ];
   };
-}
+})

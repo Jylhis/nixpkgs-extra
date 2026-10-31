@@ -44,6 +44,7 @@ Files:
 - `checks/fhs-layout.nix`
 - `rules/no-legacy-sha256.yml`
 - `rules/no-unpinned-rev.yml`
+- `rules/no-x86-64-darwin.yml`
 - `rules/prefer-tag-over-rev.yml`
 
 ```

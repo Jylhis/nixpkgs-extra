@@ -1,7 +1,9 @@
 # Haxelib packaging helpers. installLibHaxe and buildHaxeLib are adapted from
 # NixOS/nixpkgs (MIT), rev 31ecbaca, pkgs/top-level/haxe-packages.nix, so the
-# packages here can move into that file unchanged. Two extensions:
+# packages here can move into that file unchanged. Three extensions:
 #
+#  - buildHaxeLib also takes `finalAttrs: { ... }`, like mkDerivation, so
+#    packages need no `rec`.
 #  - buildHaxeLib accepts `src`: a source-built library (fetchFromGitHub plus a
 #    buildPhase) installs from the build tree instead of a lib.haxe.org zip.
 #  - mkHaxelibRepo merges several libraries into one haxelib repository, the
@@ -32,13 +34,13 @@ let
     '';
 
   buildHaxeLib =
-    {
-      libname,
-      version,
-      sha256 ? null,
-      ...
-    }@attrs:
+    attrsOrFn:
     stdenv.mkDerivation (
+      finalAttrs:
+      let
+        attrs = lib.toFunction attrsOrFn finalAttrs;
+        inherit (attrs) libname version;
+      in
       removeAttrs attrs [
         "libname"
         "sha256"
@@ -56,7 +58,7 @@ let
           attrs.src or (fetchzip rec {
             name = "${libname}-${version}";
             url = "http://lib.haxe.org/files/3.0/${withCommas name}.zip";
-            inherit sha256;
+            inherit (attrs) sha256;
             stripRoot = false;
           });
 

@@ -1,0 +1,12 @@
+id: no-path-outside-package
+language: nix
+severity: error
+message: >-
+  A package may only refer to files in its own directory, so it can move to
+  pkgs/by-name unchanged (nixpkgs-vet NPV-121). Take another package as an
+  argument from the scope instead.
+files:
+  - packages/**
+rule:
+  kind: path_expression
+  regex: '^\.\./'

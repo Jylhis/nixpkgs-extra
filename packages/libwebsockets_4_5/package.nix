@@ -9,22 +9,24 @@
   libwebsockets,
   fetchFromGitHub,
 }:
-libwebsockets.overrideAttrs (old: rec {
-  version = "4.5.8";
-  src = fetchFromGitHub {
-    owner = "warmcat";
-    repo = "libwebsockets";
-    tag = "v${version}";
-    hash = "sha256-0pLBxOSKaxboHd9L27RKKqSJ9lVH4wPgKSyXEoJMal4=";
-  };
-  patches = [ ];
-  postInstall = (old.postInstall or "") + ''
-    for pc in "$out"/lib/pkgconfig/*.pc "$dev"/lib/pkgconfig/*.pc; do
-      [ -f "$pc" ] || continue
-      sed -i \
-        -e "s|^libdir=.*$|libdir=$out/lib|" \
-        -e "s|^includedir=.*$|includedir=$dev/include|" \
-        "$pc"
-    done
-  '';
-})
+libwebsockets.overrideAttrs (
+  finalAttrs: old: {
+    version = "4.5.8";
+    src = fetchFromGitHub {
+      owner = "warmcat";
+      repo = "libwebsockets";
+      tag = "v${finalAttrs.version}";
+      hash = "sha256-0pLBxOSKaxboHd9L27RKKqSJ9lVH4wPgKSyXEoJMal4=";
+    };
+    patches = [ ];
+    postInstall = (old.postInstall or "") + ''
+      for pc in "$out"/lib/pkgconfig/*.pc "$dev"/lib/pkgconfig/*.pc; do
+        [ -f "$pc" ] || continue
+        sed -i \
+          -e "s|^libdir=.*$|libdir=$out/lib|" \
+          -e "s|^includedir=.*$|includedir=$dev/include|" \
+          "$pc"
+      done
+    '';
+  }
+)

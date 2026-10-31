@@ -8,14 +8,14 @@
   haxe-lib,
   nix-update-script,
 }:
-haxe-lib.buildHaxeLib rec {
+haxe-lib.buildHaxeLib (finalAttrs: {
   libname = "hxp";
   version = "1.3.1";
 
   src = fetchFromGitHub {
     owner = "openfl";
     repo = "hxp";
-    tag = version;
+    tag = finalAttrs.version;
     hash = "sha256-vrQUNC2q+diYwd1sE5AZan3D6oMdBCCANXgooqbKmio=";
   };
 
@@ -30,7 +30,7 @@ haxe-lib.buildHaxeLib rec {
   meta = {
     description = "Cross-platform build tools for desktop, mobile, web and consoles";
     homepage = "https://github.com/openfl/hxp";
-    changelog = "https://github.com/openfl/hxp/blob/${version}/CHANGELOG.md";
+    changelog = "https://github.com/openfl/hxp/blob/${finalAttrs.version}/CHANGELOG.md";
     license = lib.licenses.mit;
     # run.n is prebuilt bytecode (see above); bin/ ships upstream helper
     # binaries and jars (webify, closure compiler, yuicompressor, ios-deploy)
@@ -43,4 +43,4 @@ haxe-lib.buildHaxeLib rec {
     platforms = lib.platforms.unix;
     maintainers = with lib.maintainers; [ jylhis ];
   };
-}
+})

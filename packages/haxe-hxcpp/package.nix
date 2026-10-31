@@ -7,22 +7,22 @@
   fetchFromGitHub,
   haxe-lib,
 }:
-haxe-lib.buildHaxeLib rec {
+haxe-lib.buildHaxeLib (finalAttrs: {
   libname = "hxcpp";
   version = "4.3.171";
 
   src = fetchFromGitHub {
     owner = "HaxeFoundation";
     repo = "hxcpp";
-    tag = "v${version}";
+    tag = "v${finalAttrs.version}";
     hash = "sha256-fRgn5Jne6RzkUZKUj78ESs79G2DLYp0Zqh7Iin5vTKA=";
   };
 
   postPatch = ''
     substituteInPlace haxelib.json \
-      --replace-fail '"version": "4.3.0"' '"version": "${version}"'
+      --replace-fail '"version": "4.3.0"' '"version": "${finalAttrs.version}"'
     printf '#ifndef HXCPP_VERSION\n#define HXCPP_VERSION "%s"\n#endif' \
-      ${version} > include/HxcppVersion.h
+      ${finalAttrs.version} > include/HxcppVersion.h
   '';
 
   # Rebuild both neko entry points rather than trust the committed run.n:
@@ -38,18 +38,18 @@ haxe-lib.buildHaxeLib rec {
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
-    test -f "$out/lib/haxe/hxcpp/${lib.replaceStrings [ "." ] [ "," ] version}/hxcpp.n"
+    test -f "$out/lib/haxe/hxcpp/${lib.replaceStrings [ "." ] [ "," ] finalAttrs.version}/hxcpp.n"
     runHook postInstallCheck
   '';
 
   meta = {
     description = "Runtime support library for the Haxe C++ backend";
     homepage = "https://github.com/HaxeFoundation/hxcpp";
-    changelog = "https://github.com/HaxeFoundation/hxcpp/blob/v${version}/Changes.md";
+    changelog = "https://github.com/HaxeFoundation/hxcpp/blob/v${finalAttrs.version}/Changes.md";
     # One-condition BSD (LICENSE.txt), i.e. BSD-1-Clause; haxelib.json says "BSD".
     license = lib.licenses.bsd1;
     sourceProvenance = [ lib.sourceTypes.fromSource ];
     platforms = lib.platforms.unix;
     maintainers = lib.optional (lib.maintainers ? jylhis) lib.maintainers.jylhis;
   };
-}
+})

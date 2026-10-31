@@ -2,14 +2,27 @@ id: prefer-finalattrs
 language: nix
 severity: error
 message: >-
-  Use `(finalAttrs: { ... })` instead of `rec { ... }` for a derivation. `rec`
-  freezes values at definition time, so overrideAttrs can't change what other
+  Use `(finalAttrs: { ... })` instead of `rec { ... }` for a derivation, and
+  `overrideAttrs (finalAttrs: old: { ... })` for an override. `rec` freezes
+  values at definition time, so overrideAttrs can't change what other
   attributes derive from them.
 rule:
   kind: rec_attrset_expression
-  inside:
-    kind: apply_expression
-    field: argument
-    has:
-      field: function
-      regex: '(mkDerivation|buildPythonPackage|buildPythonApplication|buildGoModule|buildRustPackage|buildNpmPackage)$'
+  any:
+    - inside:
+        kind: apply_expression
+        field: argument
+        has:
+          field: function
+          regex: '(mkDerivation|build\w*(Package|Module|Application|Lib))$'
+    - inside:
+        kind: function_expression
+        field: body
+        inside:
+          kind: parenthesized_expression
+          inside:
+            kind: apply_expression
+            field: argument
+            has:
+              field: function
+              regex: 'overrideAttrs$'
