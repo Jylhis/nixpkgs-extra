@@ -5,6 +5,7 @@
 # ../arize-phoenix-client { python3Packages = ps; }) ])`.
 {
   lib,
+  fetchPypi,
   python3Packages,
   nix-update-script,
 }:
@@ -14,7 +15,7 @@ python3Packages.buildPythonPackage (finalAttrs: {
   version = "3.5.0";
   format = "wheel";
 
-  src = python3Packages.fetchPypi {
+  src = fetchPypi {
     pname = "arize_phoenix_client";
     inherit (finalAttrs) version;
     format = "wheel";

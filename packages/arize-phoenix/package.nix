@@ -10,6 +10,7 @@
 # nixpkgs moves python3, `pythonImportsCheck` fails and the tags need a bump.
 {
   lib,
+  fetchPypi,
   stdenv,
   fetchurl,
   python3,
@@ -123,7 +124,7 @@ let
   };
 
   # pydantic-ai 2.52 imports newer beta types than nixpkgs' anthropic 1.6.
-  anthropic = py.anthropic.overridePythonAttrs (_: rec {
+  anthropic = py.anthropic.overridePythonAttrs (old: rec {
     version = "1.9.0";
     pyproject = null;
     format = "wheel";
@@ -134,6 +135,10 @@ let
       hash = "sha256-p/4FqeS3IRO5NFAWmN9dVkhKyJ8FZ38PeT+L/dsVz/8=";
     };
     doCheck = false;
+    # Upstream's changelog reads src.tag, which a wheel src lacks.
+    meta = old.meta // {
+      changelog = "https://github.com/anthropics/anthropic-sdk-python/releases/tag/v${version}";
+    };
   });
 
   # Tool-annotation types phoenix.server.mcp imports; fastmcp 4 split them out
@@ -309,7 +314,7 @@ py.buildPythonApplication (finalAttrs: {
   version = "20.26.0";
   format = "wheel";
 
-  src = py.fetchPypi {
+  src = fetchPypi {
     pname = "arize_phoenix";
     inherit (finalAttrs) version;
     format = "wheel";

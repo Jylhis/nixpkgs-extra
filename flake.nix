@@ -54,14 +54,14 @@
 
       # default.nix is the real entry point; the flake only supplies pinned
       # inputs and splits the result per system.
-      repoFor = eachSystem (
-        system:
+      repoWith =
+        pkgs:
         import ./. {
-          pkgs = pkgsFor.${system};
-          fenix = fenix.packages.${system};
+          inherit pkgs;
+          fenix = fenix.packages.${pkgs.stdenv.hostPlatform.system};
           fenixFor = system: fenix.packages.${system};
-        }
-      );
+        };
+      repoFor = eachSystem (system: repoWith pkgsFor.${system});
 
       available =
         system: pkg:
@@ -84,7 +84,7 @@
           pkgs = pkgsFor.${system};
           repo = repoFor.${system};
           packages = self.packages.${system};
-          inherit home-manager llm-agents;
+          inherit repoWith home-manager llm-agents;
         }
       );
 

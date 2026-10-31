@@ -5,6 +5,7 @@
 # { python3Packages = ps; }) ])`.
 {
   lib,
+  fetchPypi,
   python3Packages,
   nix-update-script,
 }:
@@ -14,7 +15,7 @@ python3Packages.buildPythonPackage (finalAttrs: {
   version = "9.1.2";
   format = "wheel";
 
-  src = python3Packages.fetchPypi {
+  src = fetchPypi {
     pname = "robotframework_robocop";
     inherit (finalAttrs) version;
     format = "wheel";

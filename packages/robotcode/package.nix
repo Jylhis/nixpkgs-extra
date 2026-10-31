@@ -7,7 +7,9 @@
 # pinned to one version; sub-wheels are exposed in passthru for nix-update.
 {
   lib,
+  fetchPypi,
   python3Packages,
+  robotframework-robocop,
   nix-update-script,
 }:
 
@@ -22,7 +24,7 @@ let
     python3Packages.buildPythonPackage {
       inherit pname version dependencies;
       format = "wheel";
-      src = python3Packages.fetchPypi {
+      src = fetchPypi {
         pname = lib.replaceStrings [ "-" ] [ "_" ] pname;
         inherit version hash;
         format = "wheel";
@@ -34,7 +36,7 @@ let
     };
 
   py = python3Packages;
-  robocop = py.callPackage ../robotframework-robocop/package.nix { python3Packages = py; };
+  robocop = robotframework-robocop.override { python3Packages = py; };
 
   wheels = rec {
     core = wheel "robotcode-core" "sha256-3EnM6mj/8jyb27d4GqPhTyu8jzZWLPFQTd47NjBYYl4=" [
@@ -96,7 +98,7 @@ py.buildPythonPackage {
   inherit version;
   format = "wheel";
 
-  src = py.fetchPypi {
+  src = fetchPypi {
     pname = "robotcode";
     inherit version;
     format = "wheel";
