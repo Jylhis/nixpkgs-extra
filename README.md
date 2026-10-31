@@ -48,7 +48,7 @@ Option references: [NixOS modules](docs/nixos-options.md),
 <!-- BEGIN PACKAGES -->
 ### AI tools
 
-- [`bifrost`](packages/bifrost/package.nix): Bifrost, a Go LLM gateway with a web UI, governance and observability plugins ([homepage](https://github.com/maximhq/bifrost))
+- [`bifrost`](packages/bifrost/package.nix): Go LLM gateway with a web UI, governance and observability plugins ([homepage](https://github.com/maximhq/bifrost))
 - [`ds4`](packages/ds4/package.nix): Native DeepSeek V4 inference engine with a Strix Halo ROCm backend ([homepage](https://github.com/antirez/ds4))
 - [`mem0-server`](packages/mem0-server/package.nix): Self-hosted mem0 REST API server ([homepage](https://github.com/mem0ai/mem0/tree/main/server))
 - [`mem0ai`](packages/mem0ai/package.nix): Long-term memory layer for AI agents ([homepage](https://github.com/mem0ai/mem0))
@@ -69,11 +69,11 @@ Option references: [NixOS modules](docs/nixos-options.md),
 - [`trace-logging`](packages/trace-logging/package.nix): Trace logging library for AMD Vitis AI ([homepage](https://github.com/amd/trace_logging))
 - [`unilog`](packages/unilog/package.nix): Unified logging library for AMD Vitis AI ([homepage](https://github.com/amd/unilog))
 - [`vart`](packages/vart/package.nix): Vitis AI Runtime for AMD accelerators ([homepage](https://github.com/amd/vart))
-- [`vllm-rocm`](packages/vllm-rocm/package.nix): vLLM with the ROCm backend for AMD Strix APUs (prebuilt, TheRock ROCm) ([homepage](https://github.com/lemonade-sdk/vllm-rocm))
+- [`vllm-rocm`](packages/vllm-rocm/package.nix): Prebuilt vLLM with the TheRock ROCm backend for AMD Strix APUs ([homepage](https://github.com/lemonade-sdk/vllm-rocm))
 - [`xaiengine`](packages/xaiengine/package.nix): AMD AI Engine runtime driver library ([homepage](https://github.com/Xilinx/aie-rt))
 - [`xir`](packages/xir/package.nix): Xilinx Intermediate Representation for deep learning algorithms ([homepage](https://github.com/amd/xir))
 - [`xrt`](packages/xrt/package.nix): Xilinx Runtime (XRT) for AMD Ryzen AI NPU ([homepage](https://github.com/Xilinx/XRT))
-- [`xrt-plugin-amdxdna`](packages/xrt-plugin-amdxdna/package.nix): AMD XDNA driver plugin for XRT (Ryzen AI NPU support) ([homepage](https://github.com/amd/xdna-driver))
+- [`xrt-plugin-amdxdna`](packages/xrt-plugin-amdxdna/package.nix): AMD XDNA driver plugin for XRT, adding Ryzen AI NPU support ([homepage](https://github.com/amd/xdna-driver))
 
 ### Desktop applications
 
@@ -82,11 +82,11 @@ Option references: [NixOS modules](docs/nixos-options.md),
 ### Developer tools
 
 - [`ccache-storage-http-cpp`](packages/ccache-storage-http-cpp/package.nix): Remote storage helper for ccache using HTTP/HTTPS servers ([homepage](https://github.com/ccache/ccache-storage-http-cpp))
-- [`create-cloudflare`](packages/create-cloudflare/package.nix): CLI for scaffolding Cloudflare Workers projects (C3) ([homepage](https://github.com/cloudflare/workers-sdk/tree/main/packages/create-cloudflare))
+- [`create-cloudflare`](packages/create-cloudflare/package.nix): CLI for scaffolding Cloudflare Workers projects, also known as C3 ([homepage](https://github.com/cloudflare/workers-sdk/tree/main/packages/create-cloudflare))
 - [`ellsp`](packages/ellsp/package.nix): Language Server Protocol server for Emacs Lisp ([homepage](https://github.com/elisp-lsp/Ellsp))
 - [`haxe-lime`](packages/haxe-lime/package.nix): Foundational Haxe framework for cross-platform native and web development ([homepage](https://lime.openfl.org/))
 - [`hxp`](packages/hxp/package.nix): Cross-platform build tools for desktop, mobile, web and consoles ([homepage](https://github.com/openfl/hxp))
-- [`nix-ccache`](packages/nix-ccache/package.nix): ccache wrapper with a fixed cache directory for sandboxed Nix builds ([homepage](https://github.com/Jylhis/nixpkgs-extra/tree/main/packages/nix-ccache))
+- [`nix-ccache`](packages/nix-ccache/package.nix): Wrapper around ccache with a fixed cache directory for sandboxed Nix builds ([homepage](https://github.com/Jylhis/nixpkgs-extra/tree/main/packages/nix-ccache))
 - [`nvidia-cli`](packages/nvidia-cli/package.nix): NVIDIA NGC command-line interface ([homepage](https://org.ngc.nvidia.com/setup/installers/cli))
 - [`robotcode`](packages/robotcode/package.nix): Language server, debugger and CLI for Robot Framework ([homepage](https://robotcode.io))
 - [`robotframework-robocop`](packages/robotframework-robocop/package.nix): Linter and formatter for Robot Framework ([homepage](https://github.com/MarketSquare/robotframework-robocop))
@@ -102,7 +102,7 @@ Option references: [NixOS modules](docs/nixos-options.md),
 
 ### Observability
 
-- [`arize-phoenix`](packages/arize-phoenix/package.nix): Self-hosted LLM tracing, evaluation and prompt management (Arize Phoenix) ([homepage](https://github.com/Arize-ai/phoenix))
+- [`arize-phoenix`](packages/arize-phoenix/package.nix): Self-hosted LLM tracing, evaluation and prompt management from Arize ([homepage](https://github.com/Arize-ai/phoenix))
 - [`arize-phoenix-client`](packages/arize-phoenix-client/package.nix): Client for the Arize Phoenix LLM observability API ([homepage](https://github.com/Arize-ai/phoenix/tree/main/packages/phoenix-client))
 - [`arize-phoenix-evals`](packages/arize-phoenix-evals/package.nix): LLM evaluation tools from Arize Phoenix ([homepage](https://github.com/Arize-ai/phoenix/tree/main/packages/phoenix-evals))
 - [`arize-phoenix-otel`](packages/arize-phoenix-otel/package.nix): OpenTelemetry wrappers for sending traces to Arize Phoenix ([homepage](https://github.com/Arize-ai/phoenix/tree/main/packages/phoenix-otel))

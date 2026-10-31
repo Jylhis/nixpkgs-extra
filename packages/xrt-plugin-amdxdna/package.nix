@@ -161,7 +161,7 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   meta = {
-    description = "AMD XDNA driver plugin for XRT (Ryzen AI NPU support)";
+    description = "AMD XDNA driver plugin for XRT, adding Ryzen AI NPU support";
     homepage = "https://github.com/amd/xdna-driver";
     license = lib.licenses.asl20;
     sourceProvenance = [ lib.sourceTypes.fromSource ];

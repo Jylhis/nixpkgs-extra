@@ -42,7 +42,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   };
 
   meta = {
-    description = "CLI for scaffolding Cloudflare Workers projects (C3)";
+    description = "CLI for scaffolding Cloudflare Workers projects, also known as C3";
     homepage = "https://github.com/cloudflare/workers-sdk/tree/main/packages/create-cloudflare";
     changelog = "https://github.com/cloudflare/workers-sdk/blob/main/packages/create-cloudflare/CHANGELOG.md";
     license = lib.licenses.mit;

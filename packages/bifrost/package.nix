@@ -115,7 +115,7 @@ buildGo127Module {
   };
 
   meta = {
-    description = "Bifrost, a Go LLM gateway with a web UI, governance and observability plugins";
+    description = "Go LLM gateway with a web UI, governance and observability plugins";
     homepage = "https://github.com/maximhq/bifrost";
     changelog = "https://github.com/maximhq/bifrost/releases/tag/transports/v${version}";
     license = lib.licenses.asl20;

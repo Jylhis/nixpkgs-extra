@@ -126,7 +126,7 @@ stdenv.mkDerivation {
   };
 
   meta = {
-    description = "vLLM with the ROCm backend for AMD Strix APUs (prebuilt, TheRock ROCm)";
+    description = "Prebuilt vLLM with the TheRock ROCm backend for AMD Strix APUs";
     homepage = "https://github.com/lemonade-sdk/vllm-rocm";
     changelog = "https://github.com/lemonade-sdk/vllm-rocm/releases/tag/${lib.escapeURL src.releaseTag}";
     # The packaging repo is MIT; the bundle carries vLLM (Apache 2.0), torch,

@@ -130,6 +130,7 @@ packageChecks
 // vmTests
 // {
   meta-completeness = callCheck ./meta-completeness.nix;
+  meta-style = callCheck ./meta-style.nix;
   no-nixpkgs-clash = callCheck ./no-nixpkgs-clash.nix;
   overrides-target-exists = callCheck ./overrides-target-exists.nix;
   llm-agents-target-exists = callCheck ./llm-agents-target-exists.nix;

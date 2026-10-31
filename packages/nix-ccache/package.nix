@@ -28,7 +28,7 @@ stdenv.mkDerivation {
   passthru.category = "Developer tools";
 
   meta = {
-    description = "ccache wrapper with a fixed cache directory for sandboxed Nix builds";
+    description = "Wrapper around ccache with a fixed cache directory for sandboxed Nix builds";
     homepage = "https://github.com/Jylhis/nixpkgs-extra/tree/main/packages/nix-ccache";
     license = lib.licenses.mit;
     sourceProvenance = [ lib.sourceTypes.fromSource ];

@@ -408,7 +408,7 @@ py.buildPythonApplication (finalAttrs: {
   };
 
   meta = {
-    description = "Self-hosted LLM tracing, evaluation and prompt management (Arize Phoenix)";
+    description = "Self-hosted LLM tracing, evaluation and prompt management from Arize";
     homepage = "https://github.com/Arize-ai/phoenix";
     changelog = "https://github.com/Arize-ai/phoenix/releases/tag/arize-phoenix-v${finalAttrs.version}";
     license = lib.licenses.elastic20;
