@@ -1,8 +1,9 @@
 name: update
 
 # Bumps every package that sets passthru.updateScript (nix-update-script),
-# one pull request per package. PRs opened with GITHUB_TOKEN don't trigger
-# the check workflow; re-run it from the PR, or switch to a GitHub App token.
+# one pull request per package. A PR opened with GITHUB_TOKEN doesn't trigger
+# the check workflow, so the update job dispatches check on the PR branch; its
+# runs land on the PR's head commit and count as its status checks.
 on:
   schedule:
     - cron: "0 5 * * 1"
@@ -16,17 +17,25 @@ on:
 permissions:
   contents: read
 
+# The scheduled and a manual run would push the same update/<name> branches.
+concurrency:
+  group: update
+  cancel-in-progress: false
+
 jobs:
   discover:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       packages: ${{ steps.list.outputs.packages }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
       - id: list
         env:
-          ONLY: ${{ github.event.inputs.packages }}
+          ONLY: ${{ inputs.packages }}
         run: |
           # [{ name, args }] where args are the updateScript's nix-update flags.
           packages=$(nix eval --json .#packages.x86_64-linux --apply '
@@ -44,15 +53,21 @@ jobs:
     needs: discover
     if: needs.discover.outputs.packages != '[]'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: write
       pull-requests: write
+      actions: write # dispatches check on the PR branch
     strategy:
       fail-fast: false
       matrix:
         package: ${{ fromJSON(needs.discover.outputs.packages) }}
     steps:
+      # create-pull-request pushes with its own token input, so the build
+      # below never sees a credential in .git/config.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
       - name: nix-update
         id: update
@@ -60,16 +75,24 @@ jobs:
           NAME: ${{ matrix.package.name }}
           ARGS: ${{ matrix.package.args }}
         run: |
+          echo "old=$(nix eval --raw ".#$NAME.version")" >> "$GITHUB_OUTPUT"
           # shellcheck disable=SC2086 # ARGS is a flag list
           nix run nixpkgs#nix-update -- --flake $ARGS "$NAME"
           nix build --print-build-logs ".#$NAME"
           nix run .#update-docs
           echo "version=$(nix eval --raw ".#$NAME.version")" >> "$GITHUB_OUTPUT"
-      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+      - id: pr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           branch: update/${{ matrix.package.name }}
           delete-branch: true
-          commit-message: "${{ matrix.package.name }}: update to ${{ steps.update.outputs.version }}"
-          title: "${{ matrix.package.name }}: update to ${{ steps.update.outputs.version }}"
+          commit-message: "${{ matrix.package.name }}: ${{ steps.update.outputs.old }} -> ${{ steps.update.outputs.version }}"
+          title: "${{ matrix.package.name }}: ${{ steps.update.outputs.old }} -> ${{ steps.update.outputs.version }}"
           body: Automated update by nix-update.
           labels: dependencies,automated
+      - name: Dispatch check
+        if: steps.pr.outputs.pull-request-head-sha != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ matrix.package.name }}
+        run: gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "update/$NAME"
