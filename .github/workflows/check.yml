@@ -9,6 +9,13 @@ on:
 permissions:
   contents: read
 
+# Pull from these caches in every job; the check job also pushes what it
+# builds to jylhis-extra (cachix-action, below).
+env:
+  NIX_CONFIG: |
+    extra-substituters = https://jylhis-extra.cachix.org https://cache.numtide.com https://devenv.cachix.org https://nix-community.cachix.org
+    extra-trusted-public-keys = jylhis-extra.cachix.org-1:fG6wVx1e7AaS7vodJoR+0Lk2nhISY3NzGDMAZ2veXKk= niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g= devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
+
 # A new push to a pull request supersedes its running check; runs on main
 # always finish.
 concurrency:
@@ -71,6 +78,14 @@ jobs:
         with:
           nix_conf: |
             system-features = nixos-test benchmark big-parallel kvm
+      # Pushes everything this job builds. Without the secret (pull requests
+      # from forks) it only pulls. nvidia-cli is an unfree binary NVIDIA
+      # doesn't let us redistribute, so it and its source stay out.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: jylhis-extra
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          pushFilter: nvidia-cli
       - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
         with:
           primary-key: nix-${{ matrix.system }}-${{ hashFiles('flake.lock') }}
