@@ -67,7 +67,7 @@ let
   # Home Manager throws on failed assertions as soon as the config is read,
   # so judge them on the generator's output for an unconfigured tree.
   base = off.services.grafanaCloud;
-  unconfigured = extraLib.grafanaCloud.mkAssertions "services.grafanaCloud" (base);
+  unconfigured = extraLib.grafanaCloud.mkAssertions "services.grafanaCloud" base;
 
   config = full.environment.etc."alloy/config.alloy".text;
   has = lib.hasInfix;
