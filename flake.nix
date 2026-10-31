@@ -88,7 +88,7 @@
         }
       );
 
-      formatter = eachSystem (system: pkgsFor.${system}.nixfmt-tree);
+      formatter = eachSystem (system: import ./scripts/formatter.nix { pkgs = pkgsFor.${system}; });
 
       apps = eachSystem (system: {
         update-docs = {
@@ -106,8 +106,10 @@
         default = pkgsFor.${system}.mkShellNoCC {
           packages = with pkgsFor.${system}; [
             ast-grep
+            keep-sorted
             nix-update
-            nixfmt-tree
+            nixf-diagnose
+            self.formatter.${system}
           ];
         };
       });

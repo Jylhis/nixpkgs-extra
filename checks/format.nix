@@ -1,6 +1,9 @@
 # `nix fmt` must leave the tree unchanged.
 { pkgs, ... }:
-pkgs.runCommand "format" { nativeBuildInputs = [ pkgs.nixfmt-tree ]; } ''
+let
+  formatter = import ../scripts/formatter.nix { inherit pkgs; };
+in
+pkgs.runCommand "format" { nativeBuildInputs = [ formatter ]; } ''
   cp -r ${../.} source
   chmod -R +w source
   cd source
