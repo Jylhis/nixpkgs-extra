@@ -9,11 +9,20 @@ on:
 permissions:
   contents: read
 
+# A new push to a pull request supersedes its running check; runs on main
+# always finish.
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   format:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
       - run: nix fmt -- --ci
 
@@ -21,16 +30,21 @@ jobs:
   commits:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
-      - run: nix run .#lint-commits -- "origin/${{ github.base_ref }}"
+      - env:
+          BASE: ${{ github.base_ref }}
+        run: nix run .#lint-commits -- "origin/$BASE"
 
   check:
     needs: format
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
@@ -44,7 +58,15 @@ jobs:
       contents: read
       actions: write # cache-nix-action purges old caches
     steps:
+      # The runner image's preinstalled toolchains leave too little room for
+      # the full check set.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
         with:
           nix_conf: |
@@ -53,7 +75,9 @@ jobs:
         with:
           primary-key: nix-${{ matrix.system }}-${{ hashFiles('flake.lock') }}
           restore-prefixes-first-match: nix-${{ matrix.system }}-
-          purge: true
+          # Only main prunes, so pull requests (forks included) never need
+          # to delete caches.
+          purge: ${{ github.ref == 'refs/heads/main' }}
           purge-prefixes: nix-${{ matrix.system }}-
           purge-created: 0
       - name: Enable KVM
@@ -64,3 +88,17 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - name: nix flake check
         run: nix flake check --keep-going --print-build-logs --system ${{ matrix.system }}
+
+  # The one required status check: a stable name whatever the jobs above
+  # are called. commits is skipped outside pull requests.
+  ci-ok:
+    needs: [format, commits, check]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "$RESULTS"
+          jq -e 'all(. == "success" or . == "skipped")' <<<"$RESULTS"
