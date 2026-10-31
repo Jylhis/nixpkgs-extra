@@ -1,5 +1,6 @@
 {
   lib,
+  extraPkgs,
   module,
   nixosModules,
   testLib,
@@ -13,7 +14,7 @@ let
     expect
     allOf
     noFailedAssertions
-    runCases
+    runCasesOn
     ;
 
   on = evalNixos [
@@ -88,7 +89,7 @@ let
     apiKey = null;
   };
 in
-runCases "nixos-openviking-server" {
+runCasesOn extraPkgs.openviking-server.meta.platforms "nixos-openviking-server" {
   off-by-default = expect (!(off.systemd.services ? openviking-server)) "unit defined without enable";
   enables-unit = allOf [
     (expect (on.systemd.services ? openviking-server) "unit missing")

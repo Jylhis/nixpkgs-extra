@@ -12,7 +12,7 @@ let
     allOf
     failedAssertions
     noFailedAssertions
-    runCases
+    runCasesOn
     ;
 
   eval =
@@ -95,7 +95,8 @@ let
   lemond = config: config.systemd.services.lemond;
   hasFailure = config: needle: lib.any (lib.hasInfix needle) (failedAssertions config);
 in
-runCases "nixos-amd-npu" {
+# AMD NPUs (and ds4, which the module pulls in) are x86_64 only.
+runCasesOn [ "x86_64-linux" ] "nixos-amd-npu" {
   off-by-default = allOf [
     (expect (!(off.systemd.services ? lemond)) "lemond present when disabled")
     (expect (!(lib.elem "amdxdna" off.boot.kernelModules)) "amdxdna loaded when disabled")

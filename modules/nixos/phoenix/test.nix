@@ -1,5 +1,6 @@
 {
   lib,
+  extraPkgs,
   module,
   testLib,
   ...
@@ -10,7 +11,7 @@ let
     expect
     allOf
     noFailedAssertions
-    runCases
+    runCasesOn
     ;
 
   off = evalNixos [ module ];
@@ -68,7 +69,7 @@ let
 
   unit = c: c.systemd.services.phoenix;
 in
-runCases "nixos-phoenix" {
+runCasesOn extraPkgs.arize-phoenix.meta.platforms "nixos-phoenix" {
   off-by-default = expect (
     !(off.systemd.services ? phoenix) && !(off.users.users ? phoenix)
   ) "units or user defined without enable";
