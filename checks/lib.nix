@@ -52,15 +52,22 @@ rec {
 
   # cases: { <case name> = null | "<reason>"; } -> a check derivation that
   # fails evaluation listing every failing case.
-  runCases =
-    name: cases:
+  runCases = runCasesOn lib.platforms.all;
+
+  # runCases for a module whose packages only exist on some platforms. The
+  # cases are forced only by the build command, so checks/default.nix can
+  # read meta.platforms and drop the check elsewhere without evaluating them.
+  runCasesOn =
+    platforms: name: cases:
     let
       failures = lib.filterAttrs (_: r: r != null) cases;
     in
-    if failures == { } then
-      pkgs.runCommand name { } "touch $out"
-    else
-      throw (
-        "${name}:\n" + lib.concatStringsSep "\n" (lib.mapAttrsToList (case: r: "  ${case}: ${r}") failures)
-      );
+    pkgs.runCommand name { meta = { inherit platforms; }; } (
+      if failures == { } then
+        "touch $out"
+      else
+        throw (
+          "${name}:\n" + lib.concatStringsSep "\n" (lib.mapAttrsToList (case: r: "  ${case}: ${r}") failures)
+        )
+    );
 }

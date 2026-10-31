@@ -55,18 +55,23 @@ let
       );
       withTest = lib.filter (name: builtins.pathExists (dir + "/${name}/${file}")) names;
     in
-    lib.listToAttrs (
-      map (
-        name:
-        lib.nameValuePair "${prefix}-${name}" (
-          import (dir + "/${name}/${file}") {
-            inherit pkgs lib testLib;
-            inherit (repo) nixosModules homeModules;
-            extraLib = repo.lib;
-            module = repo."${kind}Modules".${name};
-          }
-        )
-      ) withTest
+    # A test built with runCasesOn is dropped where its platforms exclude
+    # this system, like packageTests above.
+    lib.filterAttrs (_: drv: lib.meta.availableOn pkgs.stdenv.hostPlatform drv) (
+      lib.listToAttrs (
+        map (
+          name:
+          lib.nameValuePair "${prefix}-${name}" (
+            import (dir + "/${name}/${file}") {
+              inherit pkgs lib testLib;
+              inherit (repo) nixosModules homeModules;
+              extraPkgs = repo.packages;
+              extraLib = repo.lib;
+              module = repo."${kind}Modules".${name};
+            }
+          )
+        ) withTest
+      )
     );
 
   # Skipped while nixpkgs' own attribute fails to evaluate (marked broken, or
