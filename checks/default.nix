@@ -134,6 +134,7 @@ packageChecks
   meta-completeness = callCheck ./meta-completeness.nix;
   meta-style = callCheck ./meta-style.nix;
   check-meta = callCheck ./check-meta.nix;
+  maintainers = callCheck ./maintainers.nix;
   no-nixpkgs-clash = callCheck ./no-nixpkgs-clash.nix;
   overrides-target-exists = callCheck ./overrides-target-exists.nix;
   llm-agents-target-exists = callCheck ./llm-agents-target-exists.nix;
