@@ -4,6 +4,8 @@
   fetchFromGitHub,
   cmake,
   nix-update-script,
+  versionCheckHook,
+  writableTmpDirAsHomeHook,
 }:
 
 rustPlatform.buildRustPackage (finalAttrs: {
@@ -35,16 +37,30 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # The crate's tests expect a running OpenViking server / network access.
   doCheck = false;
 
-  # The version-regex takes the newest `vX.Y.Z(.W)` and excludes the upstream
-  # `…dev` pre-release tags.
-  passthru.updateScript = nix-update-script {
-    extraArgs = [
-      "--version-regex"
-      "^v([0-9.]+)$"
-    ];
-  };
+  nativeInstallCheckInputs = [
+    versionCheckHook
+    writableTmpDirAsHomeHook
+  ];
+  # With a HOME but no config, every ov command, --version included, asks
+  # for a display language first; pick one in the temporary HOME.
+  versionCheckKeepEnvironment = [ "HOME" ];
+  preVersionCheck = ''
+    $out/bin/ov language en
+  '';
+  doInstallCheck = true;
 
-  passthru.category = "AI tools";
+  passthru = {
+    category = "Memory & Code Intelligence";
+    upstream = [ "llm-agents" ];
+    # The version-regex takes the newest `vX.Y.Z(.W)` and excludes the
+    # upstream `…dev` pre-release tags.
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--version-regex"
+        "^v([0-9.]+)$"
+      ];
+    };
+  };
 
   meta = {
     description = "Command-line client for OpenViking, a context filesystem for AI agents";

@@ -104,6 +104,13 @@ meta = {
 };
 ```
 
+A package meant to move upstream sets `passthru.upstream = [ "nixpkgs" ]`,
+`[ "llm-agents" ]` or both. `upstream-targets` then holds it to that
+project's rules: for nixpkgs `strictDeps`, `__structuredAttrs`,
+`meta.changelog`, `passthru.updateScript` and non-empty `meta.platforms`; for
+llm-agents `meta.changelog`, one of their categories as `passthru.category`,
+npm fetcher version 2, no `autoPatchelfHook` and `doInstallCheck`.
+
 Add new maintainers to `lib/maintainers.nix` in nixpkgs'
 `maintainer-list.nix` format.
 

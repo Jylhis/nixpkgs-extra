@@ -53,7 +53,6 @@ Option references: [NixOS modules](docs/nixos-options.md),
 - [`mem0-server`](packages/mem0-server/package.nix): Self-hosted mem0 REST API server ([homepage](https://github.com/mem0ai/mem0/tree/main/server))
 - [`mem0ai`](packages/mem0ai/package.nix): Long-term memory layer for AI agents ([homepage](https://github.com/mem0ai/mem0))
 - [`openhands`](packages/openhands/package.nix): AI software engineering agent with the Agent Canvas web interface ([homepage](https://github.com/OpenHands/OpenHands))
-- [`openviking`](packages/openviking/package.nix): Command-line client for OpenViking, a context filesystem for AI agents ([homepage](https://openviking.ai))
 - [`openviking-server`](packages/openviking-server/package.nix): Server for OpenViking, a context filesystem for AI agents ([homepage](https://openviking.ai))
 
 ### AMD NPU
@@ -95,6 +94,10 @@ Option references: [NixOS modules](docs/nixos-options.md),
 ### Media
 
 - [`lazylibrarian`](packages/lazylibrarian/package.nix): Follows authors and downloads their ebooks, audiobooks and magazines ([homepage](https://lazylibrarian.gitlab.io/))
+
+### Memory & Code Intelligence
+
+- [`openviking`](packages/openviking/package.nix): Command-line client for OpenViking, a context filesystem for AI agents ([homepage](https://openviking.ai))
 
 ### Networking
 
