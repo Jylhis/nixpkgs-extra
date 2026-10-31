@@ -27,6 +27,9 @@ stdenv.mkDerivation (finalAttrs: {
   version = "4.36.6";
 
   src = fetchzip {
+    # Named so CI's cachix pushFilter keeps this unfree archive out of the
+    # public binary cache.
+    name = "nvidia-cli-${finalAttrs.version}-source";
     url = "https://api.ngc.nvidia.com/v2/resources/nvidia/ngc-apps/ngc_cli/versions/${finalAttrs.version}/files/${source.file}";
     inherit (source) hash;
     stripRoot = false;
