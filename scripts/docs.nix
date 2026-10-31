@@ -28,24 +28,41 @@ let
       ) opt.declarations;
     };
 
+  # strict: fail on an option without a description or a type, and evaluate
+  # the modules against a pkgs that holds only lib and pkgs.formats, as
+  # nixpkgs' sandboxed doc build does (nixos/lib/eval-cacheable-options.nix),
+  # so a default that reads a package needs a defaultText.
   optionsDoc =
-    modules:
-    (pkgs.nixosOptionsDoc {
+    {
+      modules,
+      strict ? false,
+    }:
+    pkgs.nixosOptionsDoc {
       options =
         builtins.removeAttrs
           (lib.evalModules {
             modules = modules ++ [
               {
                 _module.check = false;
-                _module.args.pkgs = pkgs;
+                _module.args.pkgs =
+                  if strict then
+                    import (pkgs.path + "/pkgs/pkgs-lib") {
+                      inherit lib;
+                      pkgs = null;
+                    }
+                    // {
+                      inherit lib;
+                    }
+                  else
+                    pkgs;
               }
             ];
           }).options
           [ "_module" ];
       documentType = "none";
-      warningsAreErrors = false;
+      warningsAreErrors = strict;
       transformOptions = relativeDeclarations;
-    }).optionsCommonMark;
+    };
 
   without = attrs: lib.attrValues (builtins.removeAttrs attrs [ "default" ]);
 
@@ -83,8 +100,19 @@ let
     + "\n";
 in
 {
-  nixosOptions = optionsDoc (without repo.nixosModules);
-  homeOptions = optionsDoc (without repo.homeModules);
+  nixosOptions = (optionsDoc { modules = without repo.nixosModules; }).optionsCommonMark;
+  homeOptions = (optionsDoc { modules = without repo.homeModules; }).optionsCommonMark;
+  # For checks/module-options.nix.
+  strictOptions = {
+    nixos = optionsDoc {
+      modules = without repo.nixosModules;
+      strict = true;
+    };
+    home = optionsDoc {
+      modules = without repo.homeModules;
+      strict = true;
+    };
+  };
   packageList = pkgs.writeText "package-list.md" packageList;
   overrideList = pkgs.writeText "override-list.md" overrideList;
 }
