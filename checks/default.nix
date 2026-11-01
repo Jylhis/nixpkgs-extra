@@ -152,5 +152,9 @@ packageChecks
   overlay = callCheck ./overlay.nix;
   ast-grep = callCheck ./ast-grep.nix;
   format = callCheck ./format.nix;
+}
+# The committed docs are rendered on x86_64-linux; aarch64's renderer adds
+# blank lines to some option descriptions, so comparing there only flags that.
+// lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
   docs-current = callCheck ./docs-current.nix;
 }
