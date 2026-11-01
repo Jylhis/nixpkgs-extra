@@ -104,7 +104,8 @@ jobs:
           body: Automated update by nix-update.
           labels: dependencies,automated
       - name: Dispatch check
-        if: steps.pr.outputs.pull-request-head-sha != ''
+        # pull-request-head-sha is set even when there was nothing to commit.
+        if: contains(fromJSON('["created", "updated"]'), steps.pr.outputs.pull-request-operation)
         env:
           GH_TOKEN: ${{ github.token }}
           NAME: ${{ matrix.package.name }}
