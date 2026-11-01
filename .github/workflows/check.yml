@@ -61,9 +61,6 @@ jobs:
           - os: ubuntu-24.04-arm
             system: aarch64-linux
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
-      actions: write # cache-nix-action purges old caches
     steps:
       # The runner image's preinstalled toolchains leave too little room for
       # the full check set.
@@ -71,14 +68,25 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           df -h /
+      # The x86_64 runner's root disk filled up; when the runner has a second
+      # disk at /mnt, the store and swap go there instead.
+      - name: Move the Nix store to /mnt
+        run: |
+          if mountpoint -q /mnt; then
+            sudo install -d -o "$USER" /mnt/nix /nix
+            sudo mount --bind /mnt/nix /nix
+          fi
+          df -h / /mnt
       # Big C++ and Next.js builds (onnxruntime-vitisai, langfuse) ran the
       # runner out of memory and killed the job; swap rides out the peaks.
       - name: Add swap
         run: |
-          sudo fallocate -l 8G /swapfile-nix
-          sudo chmod 600 /swapfile-nix
-          sudo mkswap /swapfile-nix
-          sudo swapon /swapfile-nix
+          dir=/
+          if mountpoint -q /mnt; then dir=/mnt; fi
+          sudo fallocate -l 8G "$dir/swapfile-nix"
+          sudo chmod 600 "$dir/swapfile-nix"
+          sudo mkswap "$dir/swapfile-nix"
+          sudo swapon "$dir/swapfile-nix"
           free -h
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -97,15 +105,6 @@ jobs:
           name: jylhis-extra
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
           pushFilter: nvidia-cli
-      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
-        with:
-          primary-key: nix-${{ matrix.system }}-${{ hashFiles('flake.lock') }}
-          restore-prefixes-first-match: nix-${{ matrix.system }}-
-          # Only main prunes, so pull requests (forks included) never need
-          # to delete caches.
-          purge: ${{ github.ref == 'refs/heads/main' }}
-          purge-prefixes: nix-${{ matrix.system }}-
-          purge-created: 0
       - name: Enable KVM
         if: matrix.system == 'x86_64-linux'
         run: |
