@@ -2864,6 +2864,8 @@ true
 
 ## services\.grafanaCloud\.logs\.user
 
+
+
 Basic-auth username (the instance ID of this signal in the stack)\.
 
 
@@ -4730,6 +4732,8 @@ true
 
 
 ## services\.localLlm\.package
+
+
 
 The llama-cpp package to use\. The llama\.cpp build providing llama-server; pick the GPU backend per host\.
 

@@ -66,6 +66,16 @@ let
 
   without = attrs: lib.attrValues (builtins.removeAttrs attrs [ "default" ]);
 
+  # nixos-render-docs output depends on its job count (-j $NIX_BUILD_CORES):
+  # with 1 or 2 jobs some descriptions gain blank lines. One job, so the
+  # committed docs match on every builder.
+  singleJob =
+    drv:
+    assert lib.hasInfix "-j $NIX_BUILD_CORES" drv.buildCommand;
+    drv.overrideAttrs (old: {
+      buildCommand = lib.replaceStrings [ "-j $NIX_BUILD_CORES" ] [ "-j 1" ] old.buildCommand;
+    });
+
   # One bullet per package, grouped by passthru.category.
   packageList =
     let
@@ -100,8 +110,8 @@ let
     + "\n";
 in
 {
-  nixosOptions = (optionsDoc { modules = without repo.nixosModules; }).optionsCommonMark;
-  homeOptions = (optionsDoc { modules = without repo.homeModules; }).optionsCommonMark;
+  nixosOptions = singleJob (optionsDoc { modules = without repo.nixosModules; }).optionsCommonMark;
+  homeOptions = singleJob (optionsDoc { modules = without repo.homeModules; }).optionsCommonMark;
   # For checks/module-options.nix.
   strictOptions = {
     nixos = optionsDoc {
