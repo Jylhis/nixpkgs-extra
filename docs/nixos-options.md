@@ -7065,6 +7065,239 @@ attribute set of string
 
 
 
+## services\.opensnitchBaseline\.connections
+
+
+
+Rules for executables limited to some destinations, keyed by rule
+name\. Every non-empty field must match\. Paths follow the same rule as
+` allowPrograms `\.
+
+
+
+*Type:*
+attribute set of (submodule)
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+
+
+*Example:*
+
+```nix
+{
+  gh = {
+    programs = [ "${pkgs.gh}/bin/.gh-wrapped" ];
+    hosts = [ "github.com" "api.github.com" ];
+    ports = [ 443 ];
+  };
+}
+
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/nixos/opensnitch-baseline>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/nixos/opensnitch-baseline)
+
+
+
+## services\.opensnitchBaseline\.connections\.\<name>\.action
+
+
+
+What to do with a matching connection\.
+
+
+
+*Type:*
+one of “allow”, “deny”
+
+
+
+*Default:*
+
+```nix
+"allow"
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/nixos/opensnitch-baseline>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/nixos/opensnitch-baseline)
+
+
+
+## services\.opensnitchBaseline\.connections\.\<name>\.domains
+
+
+
+Destination domains, matching the name and every subdomain\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/nixos/opensnitch-baseline>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/nixos/opensnitch-baseline)
+
+
+
+## services\.opensnitchBaseline\.connections\.\<name>\.hosts
+
+
+
+Exact destination host names\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/nixos/opensnitch-baseline>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/nixos/opensnitch-baseline)
+
+
+
+## services\.opensnitchBaseline\.connections\.\<name>\.network
+
+
+
+Destination network in CIDR notation\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+
+
+*Example:*
+
+```nix
+"100.64.0.0/10"
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/nixos/opensnitch-baseline>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/nixos/opensnitch-baseline)
+
+
+
+## services\.opensnitchBaseline\.connections\.\<name>\.ports
+
+
+
+Destination ports\.
+
+
+
+*Type:*
+list of 16 bit unsigned integer; between 0 and 65535 (both inclusive)
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/nixos/opensnitch-baseline>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/nixos/opensnitch-baseline)
+
+
+
+## services\.opensnitchBaseline\.connections\.\<name>\.programs
+
+
+
+Executable paths the rule applies to\.
+
+
+
+*Type:*
+non-empty (list of string)
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/nixos/opensnitch-baseline>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/nixos/opensnitch-baseline)
+
+
+
+## services\.opensnitchBaseline\.connections\.\<name>\.users
+
+
+
+UIDs of the connecting process\.
+
+
+
+*Type:*
+list of signed integer
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/nixos/opensnitch-baseline>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/nixos/opensnitch-baseline)
+
+
+
+## services\.opensnitchBaseline\.nixHosts
+
+
+
+Hosts of the Nix substituters, ncro upstreams and remote builders\.
+
+
+
+*Type:*
+list of string *(read only)*
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/nixos/opensnitch-baseline>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/nixos/opensnitch-baseline)
+
+
+
 ## services\.openviking-server\.enable
 
 

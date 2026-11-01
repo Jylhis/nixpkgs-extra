@@ -19,6 +19,17 @@ let
       services.opensnitchBaseline = {
         enable = true;
         allowPrograms.example = "/run/current-system/sw/bin/example";
+        connections.ssh-tailnet = {
+          programs = [ "/run/current-system/sw/bin/ssh" ];
+          domains = [ "example.ts.net" ];
+          network = "100.64.0.0/10";
+          ports = [ 22 ];
+        };
+        connections.block-telemetry = {
+          action = "deny";
+          programs = [ "/run/current-system/sw/bin/telemetry" ];
+          hosts = [ "telemetry.example.com" ];
+        };
       };
       nix.settings.substituters = [
         "https://cache.example.org"
@@ -30,6 +41,8 @@ let
 
   rules = on.services.opensnitch.rules;
   cacheHosts = (lib.elemAt rules.allow-nix-caches.operator.list 1).data;
+  sshTailnet = rules.allow-ssh-tailnet.operator.list;
+  operandsOf = list: map (o: o.operand) list;
 in
 runCases "nixos-opensnitch-baseline" {
   enables-opensnitch = allOf [
@@ -41,6 +54,26 @@ runCases "nixos-opensnitch-baseline" {
   extra-program = expect (
     rules.allow-example.operator.data == "/run/current-system/sw/bin/example"
   ) "allowPrograms not rendered";
+  connection-fields = allOf [
+    (expect (
+      operandsOf sshTailnet == [
+        "process.path"
+        "dest.host"
+        "dest.network"
+        "dest.port"
+      ]
+    ) "connection rule does not AND every set field")
+    (expect (
+      (lib.elemAt sshTailnet 1).data == "^((.+\\.)?example\\.ts\\.net)$"
+    ) "domain does not match subdomains")
+  ];
+  deny-connection = expect (
+    rules.deny-block-telemetry.action == "deny"
+  ) "deny connection not rendered as deny";
+  default-connections = expect (
+    rules ? allow-nix-fetch && rules ? allow-nix-fod-fetchers
+  ) "nix fetch connections missing";
+  nix-hosts-exposed = expect (lib.elem "cache.example.org" on.services.opensnitchBaseline.nixHosts) "nixHosts does not list the substituter host";
   cache-hosts = allOf [
     (expect (lib.hasInfix "cache\\.example\\.org" cacheHosts) "https substituter host missing")
     (expect (lib.hasInfix "objects\\.example\\.net" cacheHosts) "s3 endpoint host missing")
