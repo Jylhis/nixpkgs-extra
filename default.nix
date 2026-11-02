@@ -1,5 +1,5 @@
-# Non-flake entry point; flake.nix wraps it. Without arguments it uses the
-# nixpkgs revision pinned in flake.lock.
+# Non-flake entry point; flake.nix and nur.nix wrap it. Without arguments it
+# uses the nixpkgs revision pinned in flake.lock.
 let
   lock = builtins.fromJSON (builtins.readFile ./flake.lock);
   nixpkgs =
