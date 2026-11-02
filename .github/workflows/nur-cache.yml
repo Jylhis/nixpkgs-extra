@@ -1,0 +1,79 @@
+name: nur-cache
+
+# Fills jylhis-extra for NUR users. They build nur.nix against NUR's nixpkgs
+# (nixos-unstable), not the revision in flake.lock that check builds, so
+# their store paths differ. Daily, because nixos-unstable moves every few
+# days; not on pull requests, to keep their build time.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "30 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NIX_CONFIG: |
+    extra-substituters = https://jylhis-extra.cachix.org https://cache.numtide.com https://devenv.cachix.org https://nix-community.cachix.org
+    extra-trusted-public-keys = jylhis-extra.cachix.org-1:fG6wVx1e7AaS7vodJoR+0Lk2nhISY3NzGDMAZ2veXKk= niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g= devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
+
+# A newer run builds a newer nixos-unstable; let it replace a running one.
+concurrency:
+  group: nur-cache
+  cancel-in-progress: true
+
+jobs:
+  build:
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            system: x86_64-linux
+          - os: ubuntu-24.04-arm
+            system: aarch64-linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      # Disk and swap as in check.yml: the big C++ and Next.js builds don't
+      # fit the x86_64 runner's root disk.
+      - if: matrix.system == 'x86_64-linux'
+        uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
+        with:
+          build-mount-path: /nix
+          root-reserve-mb: 4096
+          swap-size-mb: 8192
+          remove-dotnet: true
+          remove-android: true
+          remove-haskell: true
+          remove-codeql: true
+      - name: Add swap
+        if: matrix.system != 'x86_64-linux'
+        run: |
+          sudo fallocate -l 8G /swapfile-nix
+          sudo chmod 600 /swapfile-nix
+          sudo mkswap /swapfile-nix
+          sudo swapon /swapfile-nix
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
+        with:
+          nix_conf: |
+            system-features = benchmark big-parallel
+            max-jobs = 1
+            build-dir = /nix/build
+      # nvidia-cli stays out of the public cache, as in check.yml (unfree
+      # packages are not built here anyway).
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: jylhis-extra
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          pushFilter: nvidia-cli
+      - name: Build nur.nix against nixos-unstable
+        run: |
+          nix-build scripts/nur-cache.nix --no-out-link --keep-going \
+            --arg pkgs 'import <nixpkgs> { }' \
+            -I nixpkgs=channel:nixos-unstable
