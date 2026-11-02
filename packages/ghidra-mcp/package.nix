@@ -15,13 +15,13 @@
   nix-update-script,
 }:
 let
-  version = "1.4";
+  version = "2.0";
 
   src = fetchFromGitHub {
     owner = "LaurieWired";
     repo = "GhidraMCP";
     tag = version;
-    hash = "sha256-9NzmYQqfvQm5wjmmPWOG1+g9zCzGrUrRZX+m1nRS0m4=";
+    hash = "sha256-kd7ITLhjT6KJL/sWUX8ySskhZh6nCzDG6AILgtJqJPM=";
   };
 
   ghidraVersion = lib.getVersion ghidra;
