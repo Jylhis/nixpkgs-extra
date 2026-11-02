@@ -12,7 +12,8 @@ check that enforces each one here, and the submission steps.
   `{ lib, packages, scope, overrides, nixosModules, homeModules, overlays }`. Without
   arguments it uses the nixpkgs revision in `flake.lock`.
 - `flake.nix`: wraps `default.nix` per system and adds `checks`, `formatter`,
-  `apps.update-docs` and a dev shell.
+  `apps.update-docs`, `apps.nur-eval` and a dev shell.
+- `nur.nix`: the NUR entry point (see NUR).
 - `packages/<name>/package.nix`: one directory per package, auto-discovered.
   Every package is called from one scope (`packages/default.nix`) that holds
   all of them plus a `lib` whose `maintainers` include ours, so a
@@ -35,6 +36,8 @@ check that enforces each one here, and the submission steps.
 - `rules/`: ast-grep rules (`sgconfig.yml`).
 - `scripts/docs.nix`: generated docs (README package list,
   `docs/{nixos,home}-options.md`).
+- `scripts/nur-eval/`: NUR's evaluation check; `scripts/nur-cache.nix`:
+  what the nur-cache workflow builds.
 
 ## Commands
 
@@ -44,6 +47,7 @@ check that enforces each one here, and the submission steps.
 - Format: `nix fmt`.
 - Regenerate docs after changing packages or options: `nix run .#update-docs`.
 - Lint commit messages: `nix run .#lint-commits -- main`.
+- Run NUR's evaluation check: `nix run .#nur-eval [-- -nixpkgs <path>]`.
 - Update a package: `nix run nixpkgs#nix-update -- --flake <name>`.
 
 ## Naming
@@ -88,6 +92,20 @@ format and loaded by the same code (`overrides/default.nix`).
 - The `llm-agents` flake input is for checks only.
   `llm-agents-override-<attr>` builds the override and
   `llm-agents-target-exists` fails once llm-agents drops the package.
+
+## NUR
+
+The repo is also a NUR repository, through `nur.nix`: NUR calls it with
+only `pkgs` and lists the top-level derivations, so it returns `packages`
+next to `lib`, `nixosModules`, `homeModules` and `overlays`. A package may
+not take one of those names.
+
+NUR evaluates with `restrict-eval`: no `builtins.fetch*` or other network
+access at evaluation time except `https://static.rust-lang.org`. Use the
+`pkgs.fetch*` fetchers. NUR keeps the last revision that passed, so the
+`nur-eval` CI job runs the same check against nixos-unstable and fails when a
+package is no longer listed. The `nur-cache` workflow builds `nur.nix`
+against nixos-unstable daily and pushes to `jylhis-extra`.
 
 ## Package metadata
 
