@@ -13,12 +13,12 @@
 }:
 
 let
-  version = "1.13.0";
+  version = "1.34.0";
 
   src = fetchgit {
     url = "https://github.com/OpenHands/OpenHands.git";
     tag = "v${version}";
-    hash = "sha256-vZ/6KVO1HXLRpn20OVCIh3akJAj5KSKSD3pkjjBxbuQ=";
+    hash = "sha256-TwESQz+yNjeIa30GMLP7HwiQRucZ4DwwbOEAq2ibzm8=";
   };
 
   # nixpkgs moved mcp to 2.x and marks fastmcp-slim (hence fastmcp, which
@@ -236,7 +236,7 @@ buildNpmPackage {
 
   # Hash of the npm dependency closure from the fixed-up package-lock.json;
   # refresh with `lib.fakeHash` if the pin or lockfile changes.
-  npmDepsHash = "sha256-B0I0yHgVzPFPVI7DPp8PwPuQdrym77d3Sx/QgQBPiOI=";
+  npmDepsHash = "sha256-J5V1XwJ46Zd53bOdTqHhYatCnPA7ixh4C2JkuLUu/JY=";
 
   nativeBuildInputs = [ makeWrapper ];
 
