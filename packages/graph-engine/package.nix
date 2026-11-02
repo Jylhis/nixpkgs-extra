@@ -21,7 +21,7 @@
 
 stdenv.mkDerivation {
   pname = "graph-engine";
-  version = "1.0.0-unstable-2024-11-05";
+  version = "0-unstable-2024-11-05";
 
   src = fetchFromGitHub {
     owner = "amd";
