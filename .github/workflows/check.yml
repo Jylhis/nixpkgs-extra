@@ -49,6 +49,21 @@ jobs:
           BASE: ${{ github.base_ref }}
         run: nix run .#lint-commits -- "origin/$BASE"
 
+  # NUR's evaluation of nur.nix, against the nixpkgs NUR itself uses. NUR
+  # keeps the last revision that passed, so a failure here would otherwise
+  # go unnoticed.
+  nur-eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
+      - run: |
+          nixpkgs=$(nix-instantiate --find-file nixpkgs -I nixpkgs=channel:nixos-unstable)
+          nix run .#nur-eval -- -nixpkgs "$nixpkgs"
+
   check:
     needs: format
     timeout-minutes: 150
@@ -119,7 +134,7 @@ jobs:
   # The one required status check: a stable name whatever the jobs above
   # are called. commits is skipped outside pull requests.
   ci-ok:
-    needs: [format, commits, check]
+    needs: [format, commits, nur-eval, check]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

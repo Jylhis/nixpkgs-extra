@@ -89,6 +89,10 @@
             }
           );
         };
+        nur-eval = {
+          type = "app";
+          program = lib.getExe (import ./scripts/nur-eval/package.nix { pkgs = pkgsFor.${system}; });
+        };
         update-docs = {
           type = "app";
           program = lib.getExe (
