@@ -22,13 +22,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "gz-fuel-tools";
-  version = "11.0.0";
+  version = "11.0.0-pre1";
 
   src = fetchFromGitHub {
     owner = "gazebosim";
     repo = "gz-fuel-tools";
     tag = "gz-fuel-tools${lib.versions.major finalAttrs.version}_${finalAttrs.version}";
-    hash = "sha256-IFnaXBURpN5xTCxFjlcZk9n0sCsUnPBr3NUZrf7Xde0=";
+    hash = "sha256-XQG8nRB/YkxOGeRaAh0wmb+bEhh1GrF6Vsc+G8dCPpk=";
   };
 
   strictDeps = true;
