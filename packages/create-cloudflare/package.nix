@@ -12,11 +12,11 @@
 }:
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "create-cloudflare";
-  version = "2.74.5";
+  version = "2.74.6";
 
   src = fetchurl {
     url = "https://registry.npmjs.org/create-cloudflare/-/create-cloudflare-${finalAttrs.version}.tgz";
-    hash = "sha256-oa37EHTfKQ9vOyeRIM0URH7mEp3CqQCG/KXmbReDGXM=";
+    hash = "sha256-mvLIj87toi5MpAHf2tANi26oNgDxfCcFN2HUm8XrwL4=";
   };
 
   nativeBuildInputs = [ makeWrapper ];
