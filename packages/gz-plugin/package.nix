@@ -15,13 +15,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "gz-plugin";
-  version = "4.0.0";
+  version = "4.0.0-pre1";
 
   src = fetchFromGitHub {
     owner = "gazebosim";
     repo = "gz-plugin";
     tag = "gz-plugin${lib.versions.major finalAttrs.version}_${finalAttrs.version}";
-    hash = "sha256-cHpRXLKm3BHJJibL5VdLMHyRYAD3gLP7ageyFY13tZE=";
+    hash = "sha256-/T0Gav0b9BG39qm8v8J7qnpYdLSwsRZVar4i5zUyF5M=";
   };
 
   postPatch = ''
