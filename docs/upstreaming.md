@@ -26,9 +26,8 @@ only to a package that declares `passthru.upstream = [ "nixpkgs" ]`,
 - `mem0ai`: a library, and llm-agents requires `meta.mainProgram`.
 - `phoenix-mcp`, `ghidra-mcp`: MCP servers belong in
   natsukium/mcp-servers-nix.
-- `oryx`: its lockfiles are vendored and refreshed by hand with a fenix
-  nightly, so it has no `updateScript`, and nixpkgs would not take the fenix
-  toolchain.
+- `oryx`: its lockfiles are vendored and refreshed by hand, so it has no
+  `updateScript`.
 
 ## nixpkgs: blocking in CI
 
@@ -107,7 +106,7 @@ only to a package that declares `passthru.upstream = [ "nixpkgs" ]`,
    `lib/maintainers.nix` into `maintainers/maintainer-list.nix`.
 2. Move `packages/<name>/package.nix` to
    `pkgs/by-name/<shard>/<name>/package.nix`. Replace arguments only this
-   repo's scope provides (other packages here, `fenix`) with nixpkgs
+   repo's scope provides (other packages here) with nixpkgs
    attributes, and drop `passthru.category` and `passthru.upstream`.
 3. Commit as `<name>: init at <version>`, with an
    `Assisted-by: AGENT:MODEL [tools]` trailer if AI helped.
