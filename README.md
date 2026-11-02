@@ -40,6 +40,32 @@ extra.packages.<name> # also extra.overlays.default, extra.nixosModules, extra.h
 Modules don't need the overlay: their `package` options default to this
 repo's builds. The overlay only adds the packages to `pkgs`.
 
+### NUR
+
+Through the [NUR](https://github.com/nix-community/NUR), from `nur.nix`:
+
+- packages: `nur.repos.jylhis.<name>`
+- modules: `nur.repos.jylhis.modules.nixos.<name>` and
+  `nur.repos.jylhis.modules.homeManager.<name>`
+- the overlay: `nur.repos.jylhis.overlays.default`
+
+### Binary cache
+
+CI pushes builds to the `jylhis-extra` Cachix cache:
+
+```nix
+nix.settings = {
+  extra-substituters = [ "https://jylhis-extra.cachix.org" ];
+  extra-trusted-public-keys = [
+    "jylhis-extra.cachix.org-1:fG6wVx1e7AaS7vodJoR+0Lk2nhISY3NzGDMAZ2veXKk="
+  ];
+};
+```
+
+A build only hits the cache when your nixpkgs is a revision CI built
+against: the one in `flake.lock`, or for NUR a nixos-unstable that a daily
+job has built. Unfree packages are not cached.
+
 Option references: [NixOS modules](docs/nixos-options.md),
 [Home Manager modules](docs/home-options.md).
 
