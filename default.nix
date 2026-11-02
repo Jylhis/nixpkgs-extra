@@ -1,11 +1,10 @@
 # Non-flake entry point; flake.nix wraps it. Without arguments it uses the
-# nixpkgs and fenix revisions pinned in flake.lock.
+# nixpkgs revision pinned in flake.lock.
 let
   lock = builtins.fromJSON (builtins.readFile ./flake.lock);
-  fetchLocked =
-    name:
+  nixpkgs =
     let
-      node = lock.nodes.${name}.locked;
+      node = lock.nodes.nixpkgs.locked;
     in
     builtins.fetchTarball {
       url = "https://github.com/${node.owner}/${node.repo}/archive/${node.rev}.tar.gz";
@@ -14,23 +13,14 @@ let
 in
 {
   system ? builtins.currentSystem,
-  pkgs ? import (fetchLocked "nixpkgs") { inherit system; },
-  fenix ? import (fetchLocked "fenix") { inherit pkgs; },
-  # fenix for another system; modules and the overlay build against the
-  # consumer's pkgs, which need not be `system`.
-  fenixFor ? _: fenix,
+  pkgs ? import nixpkgs { inherit system; },
 }:
 let
   inherit (pkgs) lib;
 
   extraLib = import ./lib { inherit lib; };
 
-  packagesFor =
-    pkgs:
-    import ./packages {
-      inherit pkgs extraLib;
-      fenix = fenixFor pkgs.stdenv.hostPlatform.system;
-    };
+  packagesFor = pkgs: import ./packages { inherit pkgs extraLib; };
 
   packageSet = packagesFor pkgs;
 
@@ -83,7 +73,7 @@ in
   # overlays.overrides instead.
   overrides = lib.genAttrs overrideSet.names (name: overriddenPkgs.${name});
   overlays = {
-    default = import ./overlays { inherit fenixFor; };
+    default = import ./overlays;
     overrides = import ./overlays/overrides.nix;
     # Needs numtide/llm-agents.nix's overlays.shared-nixpkgs applied first.
     llm-agents = import ./overlays/llm-agents.nix;

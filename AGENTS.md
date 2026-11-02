@@ -10,12 +10,12 @@ check that enforces each one here, and the submission steps.
 
 - `default.nix`: the real entry point. `import ./. { pkgs = ...; }` returns
   `{ lib, packages, scope, overrides, nixosModules, homeModules, overlays }`. Without
-  arguments it uses the nixpkgs and fenix revisions in `flake.lock`.
+  arguments it uses the nixpkgs revision in `flake.lock`.
 - `flake.nix`: wraps `default.nix` per system and adds `checks`, `formatter`,
   `apps.update-docs` and a dev shell.
 - `packages/<name>/package.nix`: one directory per package, auto-discovered.
   Every package is called from one scope (`packages/default.nix`) that holds
-  all of them plus `fenix` and a `lib` whose `maintainers` include ours, so a
+  all of them plus a `lib` whose `maintainers` include ours, so a
   package asks for another one by naming it as an argument.
 - `modules/nixos/<name>/default.nix`, `modules/home/<name>/default.nix`:
   auto-discovered and exported as `nixosModules.<name>` / `homeModules.<name>`

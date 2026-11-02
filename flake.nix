@@ -3,10 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    fenix = {
-      url = "github:nix-community/fenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # Only the Home Manager module tests use it; consumers can follow their own.
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -24,7 +20,6 @@
     {
       self,
       nixpkgs,
-      fenix,
       home-manager,
       llm-agents,
     }:
@@ -54,13 +49,7 @@
 
       # default.nix is the real entry point; the flake only supplies pinned
       # inputs and splits the result per system.
-      repoWith =
-        pkgs:
-        import ./. {
-          inherit pkgs;
-          fenix = fenix.packages.${pkgs.stdenv.hostPlatform.system};
-          fenixFor = system: fenix.packages.${system};
-        };
+      repoWith = pkgs: import ./. { inherit pkgs; };
       repoFor = eachSystem (system: repoWith pkgsFor.${system});
 
       available =
