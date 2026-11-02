@@ -1,17 +1,16 @@
 # oryx: eBPF network-traffic sniffer TUI (https://github.com/pythops/oryx)
 #
 # Two stages: the `oryx-ebpf` crate is cross-compiled to `bpfel-unknown-none`
-# with a fenix nightly (bpf-linker, `-Z build-std`), then the object is placed
-# where `oryx-tui`'s include_bytes_aligned! expects it before the userspace
-# binary is built.
+# with bpf-linker, then the object is placed where `oryx-tui`'s
+# include_bytes_aligned! expects it before the userspace binary is built.
 {
   lib,
   stdenv,
-  runCommand,
   writeText,
   fetchFromGitHub,
-  makeRustPlatform,
-  fenix,
+  rustPlatform,
+  rustc,
+  cargo,
   bpf-linker,
 }:
 let
@@ -24,48 +23,14 @@ let
     hash = "sha256-nPYfLLkWL0N8SjNMHTCXPhmG2kwuHKAdvDYIOoWYfc4=";
   };
 
-  # Nightly with rust-src for `-Z build-std=core` on the tier-3 bpfel target.
-  # Pinned to an LLVM 21 nightly to match nixpkgs' bpf-linker; LLVM 22
-  # bitcode is unreadable to bpf-linker 0.9.x. Keep rust-std-Cargo.lock in
-  # sync with this date.
-  #
-  # Built from a vendored channel manifest because `fenix.toolchainOf` fetches
-  # it at evaluation time (IFD). Refresh channel-rust-nightly.toml from
-  # https://static.rust-lang.org/dist/<date>/channel-rust-nightly.toml.
-  toolchain = (fenix.fromManifestFile ./channel-rust-nightly.toml).withComponents [
-    "cargo"
-    "rustc"
-    "rust-src"
-  ];
-  rustPlatform = makeRustPlatform {
-    cargo = toolchain;
-    rustc = toolchain;
-  };
-
   networkTypesHash = "sha256-jcVx0t7nP6sJ2wNq4395UzOsbd4soVOy/jkL4GezfRo=";
 
-  # `-Z build-std=core` needs the std crates' dependencies vendored alongside
-  # the eBPF crate's; merge both into one cargoDeps directory.
   ebpfVendor = rustPlatform.importCargoLock {
     lockFile = ./oryx-ebpf-Cargo.lock;
     outputHashes."network-types-0.1.0" = networkTypesHash;
   };
-  # rust-std's Cargo.lock for the pinned nightly (2025-11-15); refresh with
-  # channel-rust-nightly.toml.
-  stdVendor = rustPlatform.importCargoLock {
-    lockFile = ./rust-std-Cargo.lock;
-  };
-  ebpfCargoDeps = runCommand "oryx-ebpf-cargo-deps" { } ''
-    mkdir -p "$out"
-    cp -a ${ebpfVendor}/. "$out"/
-    chmod -R u+w "$out"
-    for d in ${stdVendor}/*/; do
-      name=$(basename "$d")
-      [ -e "$out/$name" ] || cp -a "$d" "$out/$name"
-    done
-  '';
 
-  # Vendor config mapping crates-io and network-types to the merged directory.
+  # Vendor config mapping crates-io and network-types to the vendor directory.
   ebpfCargoConfig = writeText "config.toml" ''
     [source.crates-io]
     replace-with = "vendored-sources"
@@ -76,21 +41,32 @@ let
     replace-with = "vendored-sources"
 
     [source.vendored-sources]
-    directory = "${ebpfCargoDeps}"
+    directory = "${ebpfVendor}"
   '';
 
   # Stage 1: the eBPF object. oryx-ebpf is its own crate and its
-  # .cargo/config.toml pins the target and build-std; cargoSetupHook's vendor
-  # wiring does not survive cross-compiling a workspace subdir, so vendor
-  # sources are configured explicitly.
+  # .cargo/config.toml pins the target; cargoSetupHook's vendor wiring does
+  # not survive cross-compiling a workspace subdir, so vendor sources are
+  # configured explicitly.
   oryx-ebpf = stdenv.mkDerivation {
     pname = "oryx-ebpf";
     inherit version src;
 
     nativeBuildInputs = [
-      toolchain
+      rustc
+      cargo
       bpf-linker
     ];
+
+    # nixpkgs' rustc ships core for bpfel-unknown-none, so upstream's
+    # `-Z build-std=core` (and the nightly toolchain it needs) can go.
+    postPatch = ''
+      substituteInPlace oryx-ebpf/.cargo/config.toml \
+        --replace-fail 'build-std = ["core"]' ""
+    '';
+
+    # oryx-common enables trivial_bounds; aya-ebpf asm_experimental_arch.
+    env.RUSTC_BOOTSTRAP = 1;
 
     buildPhase = ''
       runHook preBuild
@@ -117,6 +93,9 @@ rustPlatform.buildRustPackage {
     outputHashes."network-types-0.1.0" = networkTypesHash;
   };
 
+  # oryx-common, shared with the eBPF crate, enables trivial_bounds.
+  env.RUSTC_BOOTSTRAP = 1;
+
   # Use the vendored lockfile (bumped past upstream's for rand/time advisories).
   postPatch = ''
     cp ${./Cargo.lock} Cargo.lock
@@ -135,8 +114,8 @@ rustPlatform.buildRustPackage {
   ];
   doCheck = false;
 
-  # No updateScript: Cargo.lock and the std/eBPF lockfiles are vendored and
-  # refreshed by hand with the pinned nightly.
+  # No updateScript: Cargo.lock and oryx-ebpf-Cargo.lock are vendored and
+  # refreshed by hand.
   passthru.category = "Networking";
 
   meta = {
