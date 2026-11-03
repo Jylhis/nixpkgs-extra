@@ -179,7 +179,10 @@ py.buildPythonApplication (finalAttrs: {
     loguru
     cryptography
     argon2-cffi
-    mcp
+    # Upstream pins mcp>=1.27,<2 (volcengine/OpenViking#3600; v0.5.3 too)
+    # and imports mcp.server.fastmcp, which mcp 2 removed. Back to `mcp`
+    # once the v2 migration (volcengine/OpenViking#5057) is released.
+    mcp_1
     pathspec
     # rapidfuzz: session.memory.merge_op.patch_handler top-level import,
     # new in 0.4.23 (pythonImportsCheck catches its absence at build).
@@ -214,9 +217,13 @@ py.buildPythonApplication (finalAttrs: {
 
   # Import the server and bot modules too: they pull the full runtime dep
   # chain, so a bump that adds a dep fails here instead of at runtime.
+  # create_app() imports mcp_endpoint lazily, so it is listed on its own; the
+  # OAuth provider is the other module on the MCP SDK's server API.
   pythonImportsCheck = [
     "openviking"
     "openviking.server.app"
+    "openviking.server.mcp_endpoint"
+    "openviking.server.oauth.provider"
     "vikingbot.cli.commands"
   ];
 
