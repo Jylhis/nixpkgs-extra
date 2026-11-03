@@ -25,7 +25,7 @@
 
 stdenv.mkDerivation {
   pname = "dynamic-dispatch";
-  version = "1.2.0-unstable-2025-03-06";
+  version = "0-unstable-2025-03-06";
 
   src = fetchFromGitHub {
     owner = "amd";
