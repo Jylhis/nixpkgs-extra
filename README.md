@@ -140,7 +140,7 @@ Option references: [NixOS modules](docs/nixos-options.md),
 
 ### Reverse engineering
 
-- [`ghidra-mcp`](packages/ghidra-mcp/package.nix): MCP bridge connecting MCP clients to a running GhidraMCP plugin ([homepage](https://github.com/LaurieWired/GhidraMCP))
+- [`ghidra-mcp`](packages/ghidra-mcp/package.nix): MCP server exposing Ghidra reverse-engineering to LLM clients via the GhidraMCP plugin ([homepage](https://github.com/LaurieWired/GhidraMCP))
 
 ### Robotics
 

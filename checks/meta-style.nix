@@ -7,7 +7,6 @@ let
 
   # Packages whose pname differs from the attribute name, and why.
   pnameExceptions = {
-    ghidra-mcp = "two derivations, ghidra-mcp-extension and ghidra-mcp-bridge, behind one attribute";
     haxe-lime = "buildHaxeLib sets pname to the haxelib name, lime";
     lemonade-server = "renamed for a nixpkgs clash; upstream's project name is lemonade";
     python-onnxruntime-vitisai = "the Python module of onnxruntime-vitisai, named after it";
