@@ -49,7 +49,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   passthru = {
     category = "Robotics";
-    updateScript = nix-update-script { extraArgs = [ "--version-regex=gz-tools2_(.*)" ]; };
+    updateScript = nix-update-script { extraArgs = [ "--version-regex=gz-tools2_([0-9.]+)$" ]; };
   };
 
   meta = {
