@@ -2,7 +2,8 @@
 # transactions. Adapted from robcohen/nixpkgs branch vitis-ai (MIT), rev
 # 9233c639, pkgs/by-name/xa/xaiengine. The pin is a commit on
 # release/main_aig, so updates follow that branch; main-aie has diverged from
-# it, and the xilinx_v* release tags are for the embedded (Versal) driver.
+# it, and the xilinx_v* release tags are for the embedded (Versal) driver,
+# so the version regex keeps nix-update from using them as the base version.
 {
   lib,
   stdenv,
@@ -14,7 +15,7 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "xaiengine";
-  version = "3.8-unstable-2024-10-08";
+  version = "0-unstable-2024-10-08";
 
   src = fetchFromGitHub {
     owner = "Xilinx";
@@ -44,7 +45,10 @@ stdenv.mkDerivation (finalAttrs: {
     category = "AMD NPU";
     library = true;
     updateScript = nix-update-script {
-      extraArgs = [ "--version=branch=release/main_aig" ];
+      extraArgs = [
+        "--version=branch=release/main_aig"
+        "--version-regex=(0-unstable-.*)"
+      ];
     };
   };
 
