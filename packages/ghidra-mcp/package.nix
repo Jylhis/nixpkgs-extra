@@ -1,15 +1,14 @@
-# GhidraMCP: Ghidra plugin plus a Python MCP bridge to its HTTP server.
+# GhidraMCP: a Ghidra plugin that serves program data over loopback HTTP, and
+# the `ghidra-mcp` MCP server that talks to it (or runs Ghidra headless).
 #
-# `passthru.extension` is the Java plugin, compiled with javac against this
-# package set's ghidra jars instead of upstream's Maven build, and shaped like
-# `ghidra.buildGhidraExtension` output for `pkgs.ghidra.withExtensions`.
-# Upstream 1.4 targets Ghidra 11.3.2; the plugin only uses stable core APIs.
+# Since 2.0 the plugin is a standard Ghidra extension under `extension/`,
+# built with Ghidra's own buildExtension.gradle (`ghidra.buildGhidraExtension`,
+# so its version always matches this package set's Ghidra). `passthru.extension`
+# drops into `pkgs.ghidra.withExtensions`. The MCP server is the `ghidra_mcp`
+# Python package; `bridge_mcp_ghidra.py` is only a legacy shim around it.
 {
   lib,
-  stdenv,
   fetchFromGitHub,
-  jdk21,
-  makeWrapper,
   python3,
   ghidra,
   nix-update-script,
@@ -24,8 +23,6 @@ let
     hash = "sha256-kd7ITLhjT6KJL/sWUX8ySskhZh6nCzDG6AILgtJqJPM=";
   };
 
-  ghidraVersion = lib.getVersion ghidra;
-
   metaCommon = {
     sourceProvenance = [ lib.sourceTypes.fromSource ];
     homepage = "https://github.com/LaurieWired/GhidraMCP";
@@ -35,80 +32,45 @@ let
     maintainers = with lib.maintainers; [ jylhis ];
   };
 
-  extension = stdenv.mkDerivation {
+  extension = ghidra.buildGhidraExtension {
     pname = "ghidra-mcp-extension";
     inherit version src;
-
-    nativeBuildInputs = [ jdk21 ];
-
-    dontConfigure = true;
-
-    buildPhase = ''
-      runHook preBuild
-
-      ghidraLib=${ghidra}/lib/ghidra/Ghidra
-      classpath=$ghidraLib/Features/Base/lib/Base.jar:$ghidraLib/Features/Decompiler/lib/Decompiler.jar
-      classpath+=:$ghidraLib/Framework/Docking/lib/Docking.jar:$ghidraLib/Framework/Generic/lib/Generic.jar
-      classpath+=:$ghidraLib/Framework/Project/lib/Project.jar:$ghidraLib/Framework/SoftwareModeling/lib/SoftwareModeling.jar
-      classpath+=:$ghidraLib/Framework/Utility/lib/Utility.jar:$ghidraLib/Framework/Gui/lib/Gui.jar
-
-      mkdir -p build/classes
-      javac -encoding UTF-8 -d build/classes -cp "$classpath" \
-        src/main/java/com/lauriewired/GhidraMCPPlugin.java
-      jar cfm build/GhidraMCP.jar src/main/resources/META-INF/MANIFEST.MF -C build/classes .
-
-      runHook postBuild
-    '';
-
-    installPhase = ''
-      runHook preInstall
-
-      ext=$out/lib/ghidra/Ghidra/Extensions/GhidraMCP
-      install -Dm444 build/GhidraMCP.jar "$ext/lib/GhidraMCP.jar"
-      install -Dm444 src/main/resources/Module.manifest "$ext/Module.manifest"
-
-      # Ghidra refuses to load a plugin whose ghidraVersion differs from its own.
-      cat > "$ext/extension.properties" <<EOF
-      name=GhidraMCP
-      description=A plugin that runs an embedded HTTP server to expose program data.
-      author=LaurieWired
-      createdOn=2025-03-22
-      version=${ghidraVersion}
-      ghidraVersion=${ghidraVersion}
-      EOF
-
-      # Prevent attempted creation of plugin lock files in the Nix store.
-      touch "$ext/.dbDirLock"
-
-      runHook postInstall
-    '';
+    sourceRoot = "${src.name}/extension";
 
     meta = metaCommon // {
-      description = "Ghidra plugin: embedded HTTP server for the GhidraMCP bridge";
-      platforms = ghidra.meta.platforms;
+      description = "Ghidra plugin: loopback HTTP backend for the GhidraMCP server";
     };
   };
-  pythonEnv = python3.withPackages (ps: [
-    ps.mcp
-    ps.requests
-  ]);
 in
-stdenv.mkDerivation {
-  pname = "ghidra-mcp-bridge";
+python3.pkgs.buildPythonApplication {
+  pname = "ghidra-mcp";
   inherit version src;
+  pyproject = true;
 
-  nativeBuildInputs = [ makeWrapper ];
-  dontBuild = true;
-  dontConfigure = true;
+  build-system = [ python3.pkgs.hatchling ];
 
-  installPhase = ''
-    runHook preInstall
+  # ghidra_mcp.server imports mcp.server.fastmcp, which mcp 2 removed;
+  # upstream pins mcp>=1.30,<2. nixpkgs keeps 1.x as mcp_1 (1.29.0, which the
+  # tests below pass on); the 1.30 floor only works around an old pydantic
+  # import (LaurieWired/GhidraMCP#176).
+  dependencies = with python3.pkgs; [
+    mcp_1
+    requests
+  ];
+  pythonRelaxDeps = [ "mcp" ];
 
-    install -Dm444 bridge_mcp_ghidra.py $out/share/ghidra-mcp/bridge_mcp_ghidra.py
-    makeWrapper ${pythonEnv}/bin/python3 $out/bin/ghidra-mcp-bridge \
-      --add-flags $out/share/ghidra-mcp/bridge_mcp_ghidra.py
+  nativeCheckInputs = [ python3.pkgs.pytestCheckHook ];
+  # Tests marked `ghidra` need a Ghidra installation; the rest use a fake backend.
+  disabledTestMarks = [ "ghidra" ];
 
-    runHook postInstall
+  pythonImportsCheck = [
+    "ghidra_mcp.cli"
+    "ghidra_mcp.server"
+  ];
+
+  # The pre-2.0 command name, kept for existing MCP client configs.
+  postInstall = ''
+    ln -s ghidra-mcp $out/bin/ghidra-mcp-bridge
   '';
 
   passthru = {
@@ -119,8 +81,8 @@ stdenv.mkDerivation {
   };
 
   meta = metaCommon // {
-    description = "MCP bridge connecting MCP clients to a running GhidraMCP plugin";
-    mainProgram = "ghidra-mcp-bridge";
+    description = "MCP server exposing Ghidra reverse-engineering to LLM clients via the GhidraMCP plugin";
+    mainProgram = "ghidra-mcp";
     platforms = lib.platforms.unix;
   };
 }
