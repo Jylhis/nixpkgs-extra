@@ -1,9 +1,10 @@
 name: update
 
 # Bumps every package that sets passthru.updateScript (nix-update-script),
-# one pull request per package. A PR opened with GITHUB_TOKEN doesn't trigger
-# the check workflow, so the update job dispatches check on the PR branch; its
-# runs land on the PR's head commit and count as its status checks.
+# one pull request per package. The update job also dispatches check on the
+# PR branch, so the PR's head commit gets a status even where opening the PR
+# triggers no pull_request run. Where it does trigger one, check.yml's
+# concurrency group cancels the duplicate.
 on:
   schedule:
     - cron: "0 5 * * 1"

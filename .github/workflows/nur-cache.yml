@@ -72,8 +72,11 @@ jobs:
           name: jylhis-extra
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
           pushFilter: nvidia-cli
+      # Skips what the caches already hold instead of downloading it.
       - name: Build nur.nix against nixos-unstable
         run: |
-          nix-build scripts/nur-cache.nix --no-out-link --keep-going \
+          nix run --inputs-from . nixpkgs#nix-fast-build -- \
+            --file scripts/nur-cache.nix --skip-cached --no-nom --max-jobs 1 \
+            --eval-workers 2 --eval-max-memory-size 2048 \
             --arg pkgs 'import <nixpkgs> { }' \
             -I nixpkgs=channel:nixos-unstable

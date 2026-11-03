@@ -16,11 +16,14 @@ env:
     extra-substituters = https://jylhis-extra.cachix.org https://cache.numtide.com https://devenv.cachix.org https://nix-community.cachix.org
     extra-trusted-public-keys = jylhis-extra.cachix.org-1:fG6wVx1e7AaS7vodJoR+0Lk2nhISY3NzGDMAZ2veXKk= niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g= devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
 
-# A new push to a pull request supersedes its running check; runs on main
-# always finish.
+# A new push to a branch supersedes its running check. The pull_request run
+# and the run update.yml dispatches on the same update/<name> branch share a
+# group, so only one of them keeps going. Each push to main gets its own
+# group: GitHub keeps one pending run per group and cancels the rest, which
+# would leave main commits without a status.
 concurrency:
-  group: check-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: check-${{ github.event_name == 'push' && github.sha || github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
   format:
@@ -63,6 +66,19 @@ jobs:
       - run: |
           nixpkgs=$(nix-instantiate --find-file nixpkgs -I nixpkgs=channel:nixos-unstable)
           nix run .#nur-eval -- -nixpkgs "$nixpkgs"
+
+  # Evaluates every flake output on both systems without building: the
+  # output shape checks of nix flake check that the check job's
+  # nix-fast-build skips (modules, overlays, apps, devShells, formatter).
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
+      - run: nix flake check --no-build --all-systems
 
   check:
     needs: format
@@ -128,13 +144,31 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: nix flake check
-        run: nix flake check --keep-going --print-build-logs --system ${{ matrix.system }}
+      # Builds only the checks whose outputs no substituter has yet, without
+      # downloading the cached ones: a change to one package builds that
+      # package, its tests and whatever depends on it, plus the lints that
+      # read the whole tree. A change to flake.lock or a shared file still
+      # rebuilds everything it reaches, because the hashes change.
+      # nix-eval-jobs starts one worker per core by default, and with 4 GB
+      # each, workers die under memory pressure; two keep eval near a minute.
+      - name: Build uncached checks
+        run: |
+          nix run --inputs-from . nixpkgs#nix-fast-build -- \
+            --flake ".#checks.${{ matrix.system }}" \
+            --skip-cached --no-nom --max-jobs 1 \
+            --eval-workers 2 --eval-max-memory-size 2048 \
+            --result-file results.xml --result-format junit
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: results-${{ matrix.system }}
+          path: results.xml
+          if-no-files-found: ignore
 
   # The one required status check: a stable name whatever the jobs above
   # are called. commits is skipped outside pull requests.
   ci-ok:
-    needs: [format, commits, nur-eval, check]
+    needs: [format, commits, nur-eval, eval, check]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
