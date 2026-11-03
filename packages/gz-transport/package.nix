@@ -104,7 +104,7 @@ stdenv.mkDerivation (finalAttrs: {
   passthru = {
     category = "Robotics";
     library = true;
-    updateScript = nix-update-script { extraArgs = [ "--version-regex=gz-transport15_(.*)" ]; };
+    updateScript = nix-update-script { extraArgs = [ "--version-regex=gz-transport15_([0-9.]+)$" ]; };
   };
 
   meta = {
