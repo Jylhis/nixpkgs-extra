@@ -29,7 +29,11 @@ testers.runNixOSTest {
 
       # The same database with a retention setting: Phoenix keeps the policy
       # it already seeded, so only the API patch can change it.
-      specialisation.retained.configuration.services.phoenix.retentionDays = 30;
+      # keepProjects creates the project and moves it to a policy with no limit.
+      specialisation.retained.configuration.services.phoenix = {
+        retentionDays = 30;
+        keepProjects = [ "kept-project" ];
+      };
     };
 
   testScript = ''
@@ -90,9 +94,25 @@ testers.runNixOSTest {
     machine.wait_until_succeeds("systemctl is-active phoenix-ingest.service", timeout=300)
     assert retention_days() == 30, retention_days()
 
-    # A second run keeps the key.
+    kept_gql = json.dumps({"query": (
+        "query { projects { edges { node { name traceRetentionPolicy { name "
+        "rule { ... on TraceRetentionRuleMaxDays { maxDays } } } } } } }"
+    )})
+
+    def kept_policy():
+        out = machine.succeed(
+            f"curl -sf -X POST -H 'Authorization: Bearer {admin}' "
+            f"-H 'Content-Type: application/json' -d '{kept_gql}' http://127.0.0.1:6006/graphql"
+        )
+        nodes = {e["node"]["name"]: e["node"] for e in json.loads(out)["data"]["projects"]["edges"]}
+        return nodes["kept-project"]["traceRetentionPolicy"]
+
+    assert kept_policy() == {"name": "keep-forever", "rule": {"maxDays": 0}}, kept_policy()
+
+    # A second run keeps the key and patches the existing keep-forever policy.
     machine.succeed("systemctl restart phoenix-ingest.service")
     assert machine.succeed(f"cat {keys}/api-key").strip() == key
+    assert kept_policy() == {"name": "keep-forever", "rule": {"maxDays": 0}}, kept_policy()
 
     machine.succeed(
         "python3 - <<'PY'\n"

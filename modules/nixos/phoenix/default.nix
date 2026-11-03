@@ -54,6 +54,41 @@ let
       jq -e 'has("errors") | not' >/dev/null
   '';
 
+  # Phoenix treats maxDays 0 as no limit. Missing projects are created first
+  # so the policy holds before their first trace arrives.
+  keepPolicy = "keep-forever";
+  keepRetention = ''
+    gql() {
+      curl -sSf -X POST -H "Authorization: Bearer $PHOENIX_ADMIN_SECRET" \
+        -H 'Content-Type: application/json' --data @- ${api}/graphql |
+        jq -e 'if has("errors") then error(.errors | tostring) else . end'
+    }
+    query='{ projects(first: 1000) { edges { node { id name } } } projectTraceRetentionPolicies { edges { node { id name } } } }'
+    state=$(jq -n --arg q "$query" '{query: $q}' | gql)
+    for name in ${lib.escapeShellArgs cfg.keepProjects}; do
+      jq -e --arg n "$name" 'any(.data.projects.edges[]; .node.name == $n)' <<<"$state" >/dev/null ||
+        jq -n --arg n "$name" '{name: $n}' |
+        curl -sSf -o /dev/null -X POST -H "Authorization: Bearer $PHOENIX_ADMIN_SECRET" \
+          -H 'Content-Type: application/json' --data @- ${api}/v1/projects
+    done
+    state=$(jq -n --arg q "$query" '{query: $q}' | gql)
+    ids=$(jq -c --argjson keep ${lib.escapeShellArg (builtins.toJSON cfg.keepProjects)} \
+      '[.data.projects.edges[].node | select(.name as $n | $keep | index($n)) | .id]' <<<"$state")
+    policy=$(jq -r --arg p ${keepPolicy} \
+      '[.data.projectTraceRetentionPolicies.edges[].node | select(.name == $p) | .id][0] // empty' <<<"$state")
+    if [ -n "$policy" ]; then
+      jq -n --arg id "$policy" --argjson ids "$ids" '{
+        query: "mutation($i: PatchProjectTraceRetentionPolicyInput!) { patchProjectTraceRetentionPolicy(input: $i) { __typename } }",
+        variables: {i: {id: $id, rule: {maxDays: {maxDays: 0}}, addProjects: $ids}}
+      }' | gql >/dev/null
+    else
+      jq -n --arg p ${keepPolicy} --argjson ids "$ids" '{
+        query: "mutation($i: CreateProjectTraceRetentionPolicyInput!) { createProjectTraceRetentionPolicy(input: $i) { __typename } }",
+        variables: {i: {name: $p, cronExpression: "0 0 * * 0", rule: {maxDays: {maxDays: 0}}, addProjects: $ids}}
+      }' | gql >/dev/null
+    fi
+  '';
+
   hardening = {
     NoNewPrivileges = true;
     PrivateTmp = true;
@@ -133,6 +168,20 @@ in
         `phoenix-ingest.service` patches the policy of an existing database
         on each start. Null leaves the policy alone, which keeps everything
         on a new database.
+      '';
+    };
+
+    keepProjects = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [ "claude-ai" ];
+      description = ''
+        Projects whose traces are never deleted, whatever
+        {option}`services.phoenix.retentionDays` says. Typical use: projects
+        that hold imported history. On each start `phoenix-ingest.service`
+        creates any missing project and assigns these projects to a
+        `${keepPolicy}` retention policy with no age limit. A project removed
+        from the list keeps that policy until it is reassigned in the UI.
       '';
     };
 
@@ -311,7 +360,8 @@ in
           chgrp ${ingestGroup} ${ingestDir} "$key" ${cfg.ingestHeadersFile}
           chmod 0640 "$key" ${cfg.ingestHeadersFile}
         ''
-        + lib.optionalString (cfg.retentionDays != null) setRetention;
+        + lib.optionalString (cfg.retentionDays != null) setRetention
+        + lib.optionalString (cfg.keepProjects != [ ]) keepRetention;
       };
     };
   };

@@ -7789,6 +7789,45 @@ list of string
 
 
 
+## services\.phoenix\.keepProjects
+
+
+
+Projects whose traces are never deleted, whatever
+` services.phoenix.retentionDays ` says\. Typical use: projects
+that hold imported history\. On each start ` phoenix-ingest.service `
+creates any missing project and assigns these projects to a
+` keep-forever ` retention policy with no age limit\. A project removed
+from the list keeps that policy until it is reassigned in the UI\.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+*Example:*
+
+```nix
+[
+  "claude-ai"
+]
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/nixos/phoenix>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/nixos/phoenix)
+
+
+
 ## services\.phoenix\.port
 
 

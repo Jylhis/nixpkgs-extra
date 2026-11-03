@@ -33,6 +33,19 @@ let
       };
     }
   ];
+  kept = evalNixos [
+    module
+    {
+      services.phoenix = {
+        enable = true;
+        retentionDays = 30;
+        keepProjects = [
+          "claude-ai"
+          "it's"
+        ];
+      };
+    }
+  ];
   exposed = evalNixos [
     module
     {
@@ -104,6 +117,14 @@ runCasesOn extraPkgs.arize-phoenix.meta.platforms "nixos-phoenix" {
   retention-set = expect (
     (unit retained).environment.PHOENIX_DEFAULT_RETENTION_POLICY_DAYS == "30"
   ) "retentionDays not passed on";
+  keep-unset = expect (
+    !(lib.hasInfix "keep-forever" (ingestScript retained))
+  ) "keep-forever policy set without keepProjects";
+  keep-set = expect (
+    lib.hasInfix "keep-forever" (ingestScript kept)
+    && lib.hasInfix "for name in claude-ai 'it'\\''s'; do" (ingestScript kept)
+    && lib.hasInfix "maxDays: 0" (ingestScript kept)
+  ) "keepProjects not in the keep-forever policy";
   ingest-group = expect (
     on.users.groups.phoenix-ingest.members == [ "alice" ]
   ) "ingestUsers not in the phoenix-ingest group";
