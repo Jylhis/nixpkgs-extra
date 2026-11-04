@@ -38,6 +38,19 @@ let
     }
   ];
   off = evalNixos [ module ];
+  wrapped = evalNixos [
+    module
+    (
+      { pkgs, ... }:
+      {
+        services.opensnitchBaseline.enable = true;
+        nix.package = pkgs.nix // {
+          nix-cli.outPath = "/nix/store/fake-nix-cli";
+        };
+      }
+    )
+  ];
+  realNix = lib.escapeRegex "/nix/store/fake-nix-cli/bin/nix";
 
   rules = on.services.opensnitch.rules;
   cacheHosts = (lib.elemAt rules.allow-nix-caches.operator.list 1).data;
@@ -77,5 +90,9 @@ runCases "nixos-opensnitch-baseline" {
   cache-hosts = allOf [
     (expect (lib.hasInfix "cache\\.example\\.org" cacheHosts) "https substituter host missing")
     (expect (lib.hasInfix "objects\\.example\\.net" cacheHosts) "s3 endpoint host missing")
+  ];
+  nix-cli-path = allOf [
+    (expect (lib.hasInfix realNix (lib.elemAt wrapped.services.opensnitch.rules.allow-nix-caches.operator.list 0).data) "allow-nix-caches does not match nix-cli")
+    (expect (lib.hasInfix realNix (lib.head wrapped.services.opensnitch.rules.allow-nix-fetch.operator.list).data) "nix-fetch does not match nix-cli")
   ];
 }

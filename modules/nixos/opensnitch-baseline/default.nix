@@ -85,6 +85,10 @@ let
     else
       url;
 
+  # nix.package can be a wrapper whose bin/nix is a symlink to nix-cli; the
+  # kernel reports the symlink target, so rules must name the real binary.
+  nixBin = "${config.nix.package.nix-cli or config.nix.package}/bin/nix";
+
   nixHosts = lib.filter (h: h != "localhost" && h != "127.0.0.1") (
     lib.unique (
       map urlHost (
@@ -211,7 +215,7 @@ in
         # Flake inputs are fetched by the evaluating nix process, not the
         # daemon; the registry resolves indirect refs like nixpkgs#hello.
         nix-fetch = {
-          programs = [ "${config.nix.package}/bin/nix" ];
+          programs = [ nixBin ];
           hosts = [
             "github.com"
             "api.github.com"
@@ -256,7 +260,7 @@ in
           list = [
             # nix-daemon runs as bin/nix; it spawns ssh for ssh-ng:// builders.
             (anyOf "process.path" [
-              "${config.nix.package}/bin/nix"
+              nixBin
               "${config.programs.ssh.package}/bin/ssh"
             ])
             (anyOf "dest.host" nixHosts)
