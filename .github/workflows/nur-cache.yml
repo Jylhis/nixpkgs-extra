@@ -59,9 +59,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
+      # Multi-user, for nix-fast-build as in check.yml.
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
         with:
-          nix_conf: |
+          extra_nix_config: |
             system-features = benchmark big-parallel
             max-jobs = 1
             build-dir = /nix/build
