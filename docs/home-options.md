@@ -169,6 +169,32 @@ string
 
 
 
+## programs\.open-code-review\.telemetry\.metrics\.enable
+
+
+
+Whether to export metrics\. Turn it off for backends that only ingest
+traces; it sets ` OTEL_METRICS_EXPORTER=none `\. The package must honor
+that variable (stock OCR 1\.13\.3 does not)\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/open-code-review>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/open-code-review)
+
+
+
 ## programs\.open-code-review\.telemetry\.resourceAttributes
 
 

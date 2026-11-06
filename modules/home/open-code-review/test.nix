@@ -44,10 +44,29 @@ let
     }
   ];
 
+  wrapperOf = cfg: lib.findFirst (p: (p.name or "") == "ocr") null cfg.home.packages;
+  noMetrics = evalHome [
+    module
+    {
+      programs.open-code-review = {
+        enable = true;
+        package = stub;
+        telemetry = {
+          enable = true;
+          endpoint = "http://otlp.example.org:6006";
+          headersFile = "/run/otlp-headers.json";
+          metrics.enable = false;
+        };
+      };
+    }
+  ];
+  activationText = on.home.activation.openCodeReviewConfig.data;
+  activationFile = pkgs.writeText "ocr-activation" activationText;
+
   viewer = on.systemd.user.services.ocr-viewer.Service;
   execStart = lib.concatStringsSep " " (lib.toList viewer.ExecStart);
 in
-runCases "home-open-code-review" {
+(runCases "home-open-code-review" {
   off-by-default = allOf [
     (expect (!off.programs.open-code-review.enable) "enabled without enable = true")
     (noFailedAssertions off)
@@ -65,16 +84,28 @@ runCases "home-open-code-review" {
     ) "allowed hosts not rendered")
     (expect (on.home.activation ? openCodeReviewConfig) "settings merge activation missing")
   ];
-  no-settings-no-activation = expect (
-    !(evalHome [
-      module
-      {
-        programs.open-code-review = {
-          enable = true;
-          package = stub;
-        };
-      }
-    ]).home.activation
-      ? openCodeReviewConfig
-  ) "activation entry without settings";
-}
+  metrics-on-by-default = expect (
+    !lib.hasInfix "OTEL_METRICS_EXPORTER" (wrapperOf on).text
+  ) "metrics exporter set by default";
+  metrics-off = expect (lib.hasInfix "export OTEL_METRICS_EXPORTER=none" (wrapperOf noMetrics).text) "OTEL_METRICS_EXPORTER=none missing when metrics are disabled";
+  activation-keeps-copy = expect (lib.hasInfix ".hm-settings.json" activationText) "settings copy not referenced";
+}).overrideAttrs
+  (old: {
+    # The prune filter itself: user keys survive, dropped keys go (arrays
+    # whole), and an emptied object stays as {}.
+    buildCommand = old.buildCommand + ''
+
+      pruneJq=$(grep -o "${builtins.storeDir}/[^ ]*ocr-prune.jq" ${activationFile})
+      cur='{"a":1,"b":{"c":2},"l":[1,2],"user":3}'
+      old='{"a":1,"b":{"c":2},"l":[1,2]}'
+      echo '{"a":1}' > new.json
+      got=$(echo "$cur" | ${lib.getExe pkgs.jq} -c --argjson old "$old" --slurpfile new new.json \
+        -f "$pruneJq")
+      want='{"a":1,"b":{},"user":3}'
+      [ "$got" = "$want" ] || { echo "prune: got $got, want $want" >&2; exit 1; }
+      got=$(echo "$cur" | ${lib.getExe pkgs.jq} -c --argjson old '{}' --slurpfile new new.json \
+        -f "$pruneJq")
+      want='{"a":1,"b":{"c":2},"l":[1,2],"user":3}'
+      [ "$got" = "$want" ] || { echo "no copy: got $got, want $want" >&2; exit 1; }
+    '';
+  })
