@@ -39,5 +39,7 @@
       sourceProvenance = [ lib.sourceTypes.fromSource ];
       maintainers = with lib.maintainers; [ jylhis ];
       platforms = [ "x86_64-linux" ];
+      # Builds onnxruntime-vitisai (about two hours): CI evaluates it but does not build it.
+      hydraPlatforms = [ ];
     };
   })

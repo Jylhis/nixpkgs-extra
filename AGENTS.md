@@ -136,6 +136,10 @@ project's rules: for nixpkgs `strictDeps`, `__structuredAttrs`,
 llm-agents `meta.changelog`, one of their categories as `passthru.category`,
 npm fetcher version 2, no `autoPatchelfHook` and `doInstallCheck`.
 
+A package too slow to build in CI, or one that builds such a package, sets
+`meta.hydraPlatforms = [ ];` with a comment saying why. Its `pkgs-<name>`
+checks are dropped; the `eval` and `nur-eval` jobs still evaluate it.
+
 Add new maintainers to `lib/maintainers.nix` in nixpkgs'
 `maintainer-list.nix` format.
 
