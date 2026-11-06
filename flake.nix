@@ -2,7 +2,7 @@
   description = "Extra Nix packages and NixOS/Home Manager modules on top of nixpkgs";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     # Only the Home Manager module tests use it; consumers can follow their own.
     home-manager = {
       url = "github:nix-community/home-manager";
