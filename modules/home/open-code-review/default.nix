@@ -5,7 +5,7 @@
 # applied settings are saved beside the config (.hm-settings.json) so a key
 # dropped from `settings` is removed on the next activation. Keys set with
 # `ocr config set` are never in that copy and survive. Without a copy nothing
-# is pruned, and an object emptied by pruning stays as `{}`.
+# is pruned. An object that pruning leaves empty is removed too.
 #
 # `ocr` is a wrapper that sets the OTEL_* variables (the OTLP protocol and
 # headers have no config key), reading the headers file at run time.
@@ -26,8 +26,12 @@ let
     def leaves($pre): to_entries[] | . as {$key, $value}
       | if ($value | type) == "object" then $value | leaves($pre + [$key])
         else $pre + [$key] end;
+    def drop_empty($p):
+      if ($p | length) > 0 and getpath($p) == {} then delpaths([$p]) | drop_empty($p[:-1])
+      else . end;
     ([$old | leaves([])] - [$new[0] | leaves([])]) as $gone
-    | delpaths($gone) * $new[0]
+    | reduce $gone[] as $p (.; delpaths([$p]) | drop_empty($p[:-1]))
+    | . * $new[0]
   '';
 
   # Without a complete provider in the config file, OCR falls back to Claude
