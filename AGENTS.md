@@ -36,8 +36,7 @@ check that enforces each one here, and the submission steps.
 - `rules/`: ast-grep rules (`sgconfig.yml`).
 - `scripts/docs.nix`: generated docs (README package list,
   `docs/{nixos,home}-options.md`).
-- `scripts/nur-eval/`: NUR's evaluation check; `scripts/nur-cache.nix`:
-  what the nur-cache workflow builds.
+- `scripts/nur-eval/`: NUR's evaluation check.
 
 ## Commands
 
@@ -108,8 +107,9 @@ NUR evaluates with `restrict-eval`: no `builtins.fetch*` or other network
 access at evaluation time except `https://static.rust-lang.org`. Use the
 `pkgs.fetch*` fetchers. NUR keeps the last revision that passed, so the
 `nur-eval` CI job runs the same check against nixos-unstable and fails when a
-package is no longer listed. The `nur-cache` workflow builds `nur.nix`
-against nixos-unstable daily and pushes to `jylhis-extra`.
+package is no longer listed. flake.lock follows nixos-unstable, NUR's
+nixpkgs, so what the check job pushes to `jylhis-extra` is what NUR users
+fetch while the lock is current; Dependabot bumps it weekly.
 
 ## Package metadata
 
