@@ -1,8 +1,11 @@
 # Open Code Review (`ocr`), an LLM code-review CLI. It reads one user config,
 # ~/.opencodereview/config.json, which `ocr config set` and its TUI rewrite in
 # place, so this module merges `settings` into that file on activation
-# instead of owning it: managed keys win, everything else is kept. A key
-# dropped from `settings` stays in the file until `ocr config unset`.
+# instead of owning it: managed keys win, everything else is kept. The last
+# applied settings are saved beside the config (.hm-settings.json) so a key
+# dropped from `settings` is removed on the next activation. Keys set with
+# `ocr config set` are never in that copy and survive. Without a copy nothing
+# is pruned, and an object emptied by pruning stays as `{}`.
 #
 # `ocr` is a wrapper that sets the OTEL_* variables (the OTLP protocol and
 # headers have no config key), reading the headers file at run time.
@@ -15,7 +18,17 @@
 let
   cfg = config.programs.open-code-review;
   configFile = "${config.home.homeDirectory}/.opencodereview/config.json";
+  stateFile = "${config.home.homeDirectory}/.opencodereview/.hm-settings.json";
   settingsFile = (pkgs.formats.json { }).generate "open-code-review-settings.json" cfg.settings;
+
+  # Arrays count as leaves, so a dropped list key is removed whole.
+  pruneFilter = pkgs.writeText "ocr-prune.jq" ''
+    def leaves($pre): to_entries[] | . as {$key, $value}
+      | if ($value | type) == "object" then $value | leaves($pre + [$key])
+        else $pre + [$key] end;
+    ([$old | leaves([])] - [$new[0] | leaves([])]) as $gone
+    | delpaths($gone) * $new[0]
+  '';
 
   # Without a complete provider in the config file, OCR falls back to Claude
   # Code's ANTHROPIC_* variables. Those credentials are for the Claude Code
@@ -39,6 +52,7 @@ let
         export OTEL_EXPORTER_OTLP_ENDPOINT=${lib.escapeShellArg cfg.telemetry.endpoint}
         export OTEL_EXPORTER_OTLP_HEADERS="$headers"
         export OTEL_SERVICE_NAME=${lib.escapeShellArg cfg.telemetry.serviceName}
+        ${lib.optionalString (!cfg.telemetry.metrics.enable) "export OTEL_METRICS_EXPORTER=none"}
         ${lib.optionalString (cfg.telemetry.resourceAttributes != { }) ''
           export OTEL_RESOURCE_ATTRIBUTES=${lib.escapeShellArg resourceAttributes}
         ''}
@@ -86,6 +100,16 @@ in
 
     telemetry = {
       enable = lib.mkEnableOption "OTLP/HTTP trace and metric export";
+
+      metrics.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Whether to export metrics. Turn it off for backends that only ingest
+          traces; it sets `OTEL_METRICS_EXPORTER=none`. The package must honor
+          that variable (stock OCR 1.13.3 does not).
+        '';
+      };
 
       endpoint = lib.mkOption {
         type = lib.types.str;
@@ -154,17 +178,23 @@ in
       (lib.mkIf (cfg.package != null) {
         home.packages = [ wrapper ];
 
-        home.activation.openCodeReviewConfig = lib.mkIf (cfg.settings != { }) (
-          lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-            conf=${lib.escapeShellArg configFile}
+        home.activation.openCodeReviewConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          conf=${lib.escapeShellArg configFile}
+          state=${lib.escapeShellArg stateFile}
+          if [ -e "$state" ]${lib.optionalString (cfg.settings != { }) " || true"}; then
             run mkdir -p "$(dirname "$conf")"
             if [ -s "$conf" ]; then current=$(cat "$conf"); else current='{}'; fi
-            merged=$(printf '%s' "$current" | ${lib.getExe pkgs.jq} --slurpfile s ${settingsFile} '. * $s[0]')
+            if [ -s "$state" ]; then old=$(cat "$state"); else old='{}'; fi
+            merged=$(printf '%s' "$current" | ${lib.getExe pkgs.jq} \
+              --argjson old "$old" --slurpfile new ${settingsFile} -f ${pruneFilter})
             if [ -z "''${DRY_RUN:-}" ]; then
-              ( umask 077; printf '%s\n' "$merged" > "$conf.tmp" ) && mv "$conf.tmp" "$conf"
+              ( umask 077
+                printf '%s\n' "$merged" > "$conf.tmp"
+                cp ${settingsFile} "$state.tmp" && chmod 600 "$state.tmp" ) \
+                && mv "$conf.tmp" "$conf" && mv "$state.tmp" "$state"
             fi
-          ''
-        );
+          fi
+        '';
 
         systemd.user.services.ocr-viewer = lib.mkIf cfg.viewer.enable {
           Unit.Description = "Open Code Review session viewer";
