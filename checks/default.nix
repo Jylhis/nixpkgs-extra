@@ -1,5 +1,6 @@
 # `nix flake check` set:
 #   pkgs-<name>              every package builds and has an FHS-like $out
+#                            (not those with meta.hydraPlatforms = [ ])
 #   pkgs-<name>-<test>       every derivation in a package's passthru.tests
 #   nixos-<name>, home-<name> modules/<kind>/<name>/test.nix (eval tests)
 #   vm-<name>                modules/nixos/<name>/vm-test.nix (x86_64-linux only:
@@ -33,9 +34,18 @@ let
 
   testLib = import ./lib.nix { inherit pkgs home-manager; };
 
+  # meta.hydraPlatforms = [ ] marks a package too slow to build in CI, as in
+  # nixpkgs. The eval and nur-eval jobs still evaluate it.
+  ciPackages = lib.filterAttrs (
+    _: pkg:
+    lib.elem pkgs.stdenv.hostPlatform.system (
+      pkg.meta.hydraPlatforms or [ pkgs.stdenv.hostPlatform.system ]
+    )
+  ) packages;
+
   packageChecks = lib.mapAttrs' (
     name: pkg: lib.nameValuePair "pkgs-${name}" (import ./fhs-layout.nix { inherit pkgs; } name pkg)
-  ) packages;
+  ) ciPackages;
 
   packageTests = lib.concatMapAttrs (
     name: pkg:
@@ -44,7 +54,7 @@ let
         _: drv: lib.isDerivation drv && lib.meta.availableOn pkgs.stdenv.hostPlatform drv
       ) (pkg.passthru.tests or { })
     )
-  ) packages;
+  ) ciPackages;
 
   moduleTests =
     kind: file: prefix:

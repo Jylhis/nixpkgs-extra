@@ -1,7 +1,7 @@
 # nixpkgs-extra
 
 Nix packages and NixOS / Home Manager modules that are not in nixpkgs.
-x86_64-linux and aarch64-linux.
+x86_64-linux and aarch64-linux; CI builds and caches x86_64-linux only.
 
 ## Use
 
