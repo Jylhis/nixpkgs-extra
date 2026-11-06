@@ -167,5 +167,7 @@ stdenv.mkDerivation (finalAttrs: {
     sourceProvenance = [ lib.sourceTypes.fromSource ];
     maintainers = with lib.maintainers; [ jylhis ];
     platforms = [ "x86_64-linux" ];
+    # Builds xrt (slow): CI evaluates it but does not build it.
+    hydraPlatforms = [ ];
   };
 })
