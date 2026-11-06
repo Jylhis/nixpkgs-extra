@@ -109,6 +109,7 @@
           packages = with pkgsFor.${system}; [
             ast-grep
             keep-sorted
+            nix-fast-build
             nix-update
             nixf-diagnose
             self.formatter.${system}

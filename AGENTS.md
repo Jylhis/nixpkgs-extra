@@ -44,6 +44,10 @@ check that enforces each one here, and the submission steps.
 - Enter the dev shell: `nix develop`.
 - Build a package: `nix build .#<name>`.
 - Run all checks: `nix flake check`.
+- Build only the checks no cache has yet, as CI does:
+  `nix-fast-build --flake .#checks.x86_64-linux --skip-cached --no-nom --eval-workers 2`.
+- Run one check: `nix build .#checks.x86_64-linux.pkgs-<name>` (or
+  `pkgs-<name>-<test>`, `nixos-<name>`, `vm-<name>`).
 - Format: `nix fmt`.
 - Regenerate docs after changing packages or options: `nix run .#update-docs`.
 - Lint commit messages: `nix run .#lint-commits -- main`.
