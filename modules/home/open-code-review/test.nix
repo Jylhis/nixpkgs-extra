@@ -92,20 +92,20 @@ in
 }).overrideAttrs
   (old: {
     # The prune filter itself: user keys survive, dropped keys go (arrays
-    # whole), and an emptied object stays as {}.
+    # whole), objects emptied by the prune go, and a user key keeps its object.
     buildCommand = old.buildCommand + ''
 
       pruneJq=$(grep -o "${builtins.storeDir}/[^ ]*ocr-prune.jq" ${activationFile})
-      cur='{"a":1,"b":{"c":2},"l":[1,2],"user":3}'
-      old='{"a":1,"b":{"c":2},"l":[1,2]}'
+      cur='{"a":1,"b":{"c":2},"d":{"e":{"f":1}},"l":[1,2],"p":{"x":1,"u":2},"user":3}'
+      old='{"a":1,"b":{"c":2},"d":{"e":{"f":1}},"l":[1,2],"p":{"x":1}}'
       echo '{"a":1}' > new.json
       got=$(echo "$cur" | ${lib.getExe pkgs.jq} -c --argjson old "$old" --slurpfile new new.json \
         -f "$pruneJq")
-      want='{"a":1,"b":{},"user":3}'
+      want='{"a":1,"p":{"u":2},"user":3}'
       [ "$got" = "$want" ] || { echo "prune: got $got, want $want" >&2; exit 1; }
       got=$(echo "$cur" | ${lib.getExe pkgs.jq} -c --argjson old '{}' --slurpfile new new.json \
         -f "$pruneJq")
-      want='{"a":1,"b":{"c":2},"l":[1,2],"user":3}'
+      want='{"a":1,"b":{"c":2},"d":{"e":{"f":1}},"l":[1,2],"p":{"x":1,"u":2},"user":3}'
       [ "$got" = "$want" ] || { echo "no copy: got $got, want $want" >&2; exit 1; }
     '';
   })
