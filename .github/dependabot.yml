@@ -1,5 +1,6 @@
-# Keeps the SHA-pinned actions in .github/workflows current. The "github"
-# prefix makes subjects like "github: bump ..." that lint-commits accepts.
+# Keeps the SHA-pinned actions in .github/workflows and the flake inputs
+# current. The prefixes make subjects ("github: bump ...", "flake.lock:
+# bump ...") that lint-commits accepts.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -13,3 +14,17 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: github
+
+  # One pull request for all inputs: each one rebuilds every check that
+  # nixpkgs reaches, so separate ones would rebuild it per input.
+  - package-ecosystem: nix
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+    groups:
+      flake-inputs:
+        patterns: ["*"]
+    commit-message:
+      prefix: flake.lock
