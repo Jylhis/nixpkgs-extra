@@ -15,13 +15,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "xaiengine";
-  version = "0-unstable-2024-10-08";
+  version = "0-unstable-2026-01-07";
 
   src = fetchFromGitHub {
     owner = "Xilinx";
     repo = "aie-rt";
-    rev = "4a012d7932155217d2c9368a3588a3c41d2b9edb";
-    hash = "sha256-nI8RZod53HYfo1GEJYu0pOOWUHrG3+jGh2etmDl//eY=";
+    rev = "8849e208bdcc533b20a0ed3f95c1ce961dee9c3a";
+    hash = "sha256-CiczNOcjsRd+163gRqGpjNW9ap/6ntHNV8ImkLssWts=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/driver";
