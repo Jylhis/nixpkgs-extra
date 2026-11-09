@@ -3,9 +3,12 @@
 # Providers:
 #   local         llama-swap (a keyless custom openai provider)
 #   local-<n>s    the same llama-swap with an <n> second request timeout, one
-#                 per distinct overflow timeout (Bifrost times out per provider)
+#                 per distinct overflow or `timeouts` value (Bifrost times out
+#                 per provider)
 #   openrouter    the cloud egress, present only when some model routes to
 #                 it; its key is read from OPENROUTER_API_KEY
+#   anthropic     the direct Anthropic API, present only when anthropicModels
+#                 is set; its key is read from ANTHROPIC_API_KEY
 # Secrets never appear here: values are `env.VAR` references the runner fills.
 { lib }:
 let
@@ -42,41 +45,52 @@ in
   headerValue =
     s: key: if (s.authType or "bearer_token") == "bearer_token" then "Bearer ${key}" else key;
 
-  # cloudModels: name -> OpenRouter id (no local twin). openrouterFallbacks:
-  # local name -> OpenRouter id. overflow: local name -> { rpm, timeout }.
-  # otel headers: name -> env var name.
+  # cloudModels: name -> OpenRouter id (no local twin). anthropicModels: name
+  # -> Anthropic model id. openrouterFallbacks: local name -> OpenRouter id.
+  # overflow: local name -> { rpm, timeout }. timeouts: local name -> request
+  # seconds for models outside overflow (overflow wins). otel headers: name ->
+  # env var name.
   render =
     {
       swapPort,
       localModels,
       cloudModels ? { },
+      anthropicModels ? { },
+      timeouts ? { },
       openrouterFallbacks ? { },
       overflow ? { },
       extraFallbacks ? { },
       mcpServers ? { },
       otel ? null,
       timeout ? 120,
+      # Bifrost is often also the /mcp upstream of coding agents; injecting
+      # every MCP tool into each inference request would then double them.
+      disableMcpAutoToolInject ? false,
       # A directory holding pricing.json and model-parameters.json. Set, the
       # datasheets load from it and the gateway never calls getbifrost.ai.
       datasheetDir ? null,
     }:
     let
       localNames = lib.attrNames localModels;
-      exposed = lib.sort lib.lessThan (localNames ++ lib.attrNames cloudModels);
+      exposed = lib.sort lib.lessThan (
+        localNames ++ lib.attrNames cloudModels ++ lib.attrNames anthropicModels
+      );
 
-      overflowTimeout = name: overflow.${name}.timeout or null;
+      overflowTimeout = name: overflow.${name}.timeout or timeouts.${name} or null;
       providerOf =
         name:
         let
           t = overflowTimeout name;
         in
         if t == null then "local" else "local-${toString t}s";
-      timeouts = lib.unique (lib.filter (t: t != null) (map overflowTimeout localNames));
+      distinctTimeouts = lib.unique (lib.filter (t: t != null) (map overflowTimeout localNames));
 
       refOf =
         name:
         if cloudModels ? ${name} then
           "openrouter/${cloudModels.${name}}"
+        else if anthropicModels ? ${name} then
+          "anthropic/${anthropicModels.${name}}"
         else if localModels ? ${name} then
           "${providerOf name}/${name}"
         else
@@ -105,15 +119,21 @@ in
       localProviders = lib.listToAttrs (
         map (
           t: lib.nameValuePair "local-${toString t}s" (localProvider t (namesOn "local-${toString t}s"))
-        ) timeouts
+        ) distinctTimeouts
       );
       plainLocal = namesOn "local";
 
       orModels = lib.unique (lib.attrValues openrouterFallbacks ++ lib.attrValues cloudModels);
 
       target = name: {
-        provider = if cloudModels ? ${name} then "openrouter" else providerOf name;
-        model = cloudModels.${name} or name;
+        provider =
+          if cloudModels ? ${name} then
+            "openrouter"
+          else if anthropicModels ? ${name} then
+            "anthropic"
+          else
+            providerOf name;
+        model = cloudModels.${name} or anthropicModels.${name} or name;
         weight = 1;
       };
       fallbacksOf =
@@ -198,6 +218,22 @@ in
               max_retries = 0;
             };
           };
+        }
+        // lib.optionalAttrs (anthropicModels != { }) {
+          anthropic = {
+            keys = [
+              {
+                name = "anthropic";
+                value = "env.ANTHROPIC_API_KEY";
+                models = lib.unique (lib.attrValues anthropicModels);
+                weight = 1;
+              }
+            ];
+            network_config = {
+              default_request_timeout_in_seconds = timeout;
+              max_retries = 0;
+            };
+          };
         };
 
       governance = {
@@ -234,7 +270,12 @@ in
         }) overflow;
       };
 
-      mcp.client_configs = mcpClients mcpServers;
+      mcp = {
+        client_configs = mcpClients mcpServers;
+      }
+      // lib.optionalAttrs disableMcpAutoToolInject {
+        tool_manager_config.disable_auto_tool_inject = true;
+      };
 
       plugins = [
         {

@@ -16,6 +16,7 @@ let
 
   key = "/run/user/1000/bifrost-key";
   orKey = "/run/user/1000/openrouter-key";
+  anthKey = "/run/user/1000/anthropic-key";
 
   embedder = {
     kind = "embedding";
@@ -49,9 +50,19 @@ let
     resourceControl = {
       cpuWeight = 50;
       memoryHigh = "60%";
+      memoryMax = "75%";
+      oomPolicy = "continue";
       oomScoreAdjust = 300;
       allowedCPUs = [ "8-15" ];
     };
+    gatewayResourceControl = {
+      cpuWeight = 80;
+      memoryHigh = "1G";
+    };
+    anthropicApiKeyFile = anthKey;
+    anthropicModels.claude-fast = "claude-fast-1";
+    disableMcpAutoToolInject = true;
+    timeouts.small-chat = 900;
     models = {
       inherit embedder;
       reranker = {
@@ -74,7 +85,10 @@ let
       vision = "vendor/vision";
       vision-alt = "vendor/vision-alt";
     };
-    extraFallbacks.vision = [ "vision-alt" ];
+    extraFallbacks = {
+      vision = [ "vision-alt" ];
+      claude-fast = [ "vision" ];
+    };
     mcpServers.search = {
       url = "https://mcp.example.org/mcp";
       envVar = "SEARCH_API_KEY";
@@ -96,6 +110,7 @@ let
   localBf = local.services.llamaServers.bifrostSettings;
   rule = id: lib.findFirst (r: r.id == id) null bf.governance.routing_rules;
   svc = full.systemd.user.services.llama-swap.Service;
+  gw = full.systemd.user.services.bifrost.Service;
   warm = full.systemd.user.services.llama-swap-warmup;
   spaced =
     (eval {
@@ -155,6 +170,34 @@ runCases "home-llama-servers" {
       models.embedder = embedder;
       overflow.embedder.rpm = 1;
     })) "overflow without a fallback accepted")
+    (expect (rejected (eval {
+      enable = true;
+      masterKeyFile = key;
+      models.embedder = embedder;
+      anthropicModels.c = "claude-x";
+    })) "anthropic model without a key accepted")
+    (expect (rejected (eval {
+      enable = true;
+      masterKeyFile = key;
+      anthropicApiKeyFile = anthKey;
+      models.embedder = embedder;
+      anthropicModels.embedder = "claude-x";
+    })) "anthropic model clashing with a local one accepted")
+    (expect (rejected (eval {
+      enable = true;
+      masterKeyFile = key;
+      models.embedder = embedder;
+      timeouts.nope = 10;
+    })) "timeout for an unknown model accepted")
+    (expect (rejected (eval {
+      enable = true;
+      masterKeyFile = key;
+      openrouterApiKeyFile = orKey;
+      models.embedder = embedder;
+      openrouterFallbacks.embedder = "vendor/embedder";
+      overflow.embedder.rpm = 1;
+      timeouts.embedder = 10;
+    })) "timeout on an overflow model accepted")
   ];
 
   llama-swap-config = allOf [
@@ -190,6 +233,13 @@ runCases "home-llama-servers" {
     (expect (svc.MemoryHigh == "60%") "memoryHigh")
     (expect (svc.OOMScoreAdjust == 300) "oomScoreAdjust")
     (expect (svc.AllowedCPUs == [ "8-15" ]) "allowedCPUs")
+    (expect (svc.MemoryMax == "75%") "memoryMax")
+    (expect (svc.OOMPolicy == "continue") "oomPolicy")
+    (expect (!(local.systemd.user.services.llama-swap.Service ? MemoryMax)) "MemoryMax set by default")
+    (expect (!(local.systemd.user.services.llama-swap.Service ? OOMPolicy)) "OOMPolicy set by default")
+    (expect (gw.CPUWeight == 80) "gateway cpuWeight")
+    (expect (gw.MemoryHigh == "1G") "gateway memoryHigh")
+    (expect (!(local.systemd.user.services.bifrost.Service ? CPUWeight)) "gateway CPUWeight set by default")
   ];
 
   bifrost-config = allOf [
@@ -217,6 +267,29 @@ runCases "home-llama-servers" {
       (lib.head bf.mcp.client_configs).headers.Authorization == "env.SEARCH_API_KEY"
     ) "mcp header reference")
     (expect (lib.any (p: p.name == "otel") bf.plugins) "otel plugin")
+    (expect (
+      (lib.head bf.providers.anthropic.keys) == {
+        name = "anthropic";
+        value = "env.ANTHROPIC_API_KEY";
+        models = [ "claude-fast-1" ];
+        weight = 1;
+      }
+    ) "anthropic provider")
+    (expect (!(localBf.providers ? anthropic)) "anthropic provider rendered without models")
+    (expect (
+      (rule "route-claude-fast").targets == [
+        {
+          provider = "anthropic";
+          model = "claude-fast-1";
+          weight = 1;
+        }
+      ]
+    ) "anthropic route")
+    (expect ((rule "route-claude-fast").fallbacks == [ "openrouter/vendor/vision" ]) "anthropic fallback")
+    (expect (bf.providers ? "local-900s") "timeouts provider missing")
+    (expect (bf.providers.local-900s.network_config.default_request_timeout_in_seconds == 900) "timeouts value")
+    (expect (bf.mcp.tool_manager_config.disable_auto_tool_inject) "auto tool inject not disabled")
+    (expect (!(localBf.mcp ? tool_manager_config)) "tool manager config set by default")
     (expect (!(lib.hasInfix "/run/user" (builtins.toJSON bf))) "a key path leaked into config.json")
   ];
 }
