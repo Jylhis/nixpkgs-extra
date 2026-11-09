@@ -278,11 +278,14 @@ let
     inherit (cfg)
       swapPort
       cloudModels
+      anthropicModels
+      timeouts
       openrouterFallbacks
       overflow
       extraFallbacks
       mcpServers
       datasheetDir
+      disableMcpAutoToolInject
       ;
     localModels = cfg.models;
     otel = otelSettings;
@@ -311,6 +314,9 @@ let
     ${lib.optionalString (cfg.openrouterApiKeyFile != null) ''
       printf 'OPENROUTER_API_KEY=%q\n' "$(cat ${lib.escapeShellArg (toString cfg.openrouterApiKeyFile)})"
     ''}
+    ${lib.optionalString (cfg.anthropicApiKeyFile != null) (
+      quotedLine "ANTHROPIC_API_KEY" (toString cfg.anthropicApiKeyFile)
+    )}
         printf 'BIFROST_VK=%q\n' "$vk"
         printf 'BIFROST_ADMIN_USERNAME=admin\n'
         printf 'BIFROST_ADMIN_PASSWORD=%q\n' "$(cat "$state/admin-password")"
@@ -341,6 +347,7 @@ let
   '';
 
   rc = cfg.resourceControl;
+  grc = cfg.gatewayResourceControl;
 in
 {
   options.services.llamaServers = {
@@ -510,6 +517,19 @@ in
       '';
     };
 
+    timeouts = lib.mkOption {
+      type = lib.types.attrsOf lib.types.ints.positive;
+      default = { };
+      example = {
+        "big-chat" = 900;
+      };
+      description = ''
+        Request timeout in seconds for slow local models without an
+        OpenRouter fallback (`overflow.<name>.timeout` covers the others and
+        wins). Bifrost gives each distinct timeout its own local provider.
+      '';
+    };
+
     overflow = lib.mkOption {
       type = lib.types.attrsOf (
         lib.types.submodule {
@@ -570,6 +590,37 @@ in
       description = ''
         Cloud-only models: name clients send -> OpenRouter model id, with no
         local server. `extraFallbacks` may name them.
+      '';
+    };
+
+    anthropicModels = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      example = {
+        "claude-haiku" = "claude-haiku-4-5";
+      };
+      description = ''
+        Models served by the direct Anthropic API: name clients send ->
+        Anthropic model id. Clients still speak OpenAI-compatible to the
+        gateway and Bifrost translates. Needs `anthropicApiKeyFile`. Name a
+        `cloudModels` twin in `extraFallbacks` to keep the model reachable
+        when Anthropic fails or the credit runs out.
+      '';
+    };
+
+    anthropicApiKeyFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "File whose whole content is the Anthropic API key. Required when `anthropicModels` is set.";
+    };
+
+    disableMcpAutoToolInject = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Stop Bifrost from adding the tools of `mcpServers` to every inference
+        request. Set it when coding agents also use the gateway as an MCP
+        upstream, so each tool appears once.
       '';
     };
 
@@ -693,6 +744,34 @@ in
         description = "cpuset pinning (AllowedCPUs) of llama-swap and its children; null pins nothing.";
       };
 
+      memoryMax = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        example = "75%";
+        description = ''
+          Hard memory ceiling (systemd MemoryMax) of llama-swap and its
+          children. Set it above `memoryHigh` so mmap'd weights still get
+          soft reclaim first; past it the kernel OOM-kills inside this
+          cgroup instead of squeezing the session.
+        '';
+      };
+
+      oomPolicy = lib.mkOption {
+        type = lib.types.nullOr (
+          lib.types.enum [
+            "continue"
+            "stop"
+            "kill"
+          ]
+        );
+        default = null;
+        example = "continue";
+        description = ''
+          systemd OOMPolicy of llama-swap. `continue` keeps llama-swap and
+          the other model servers running when the kernel kills one server.
+        '';
+      };
+
       oomScoreAdjust = lib.mkOption {
         type = lib.types.nullOr (lib.types.ints.between 0 1000);
         default = null;
@@ -703,6 +782,22 @@ in
           the kernel OOM killer (and earlyoom); llama-swap restarts a
           server on the next request.
         '';
+      };
+    };
+
+    gatewayResourceControl = {
+      cpuWeight = lib.mkOption {
+        type = lib.types.nullOr (lib.types.ints.between 1 10000);
+        default = null;
+        example = 80;
+        description = "CPUWeight of the Bifrost gateway unit. Null keeps systemd's default.";
+      };
+
+      memoryHigh = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        example = "1G";
+        description = "Soft memory ceiling (systemd MemoryHigh) of the Bifrost gateway unit.";
       };
     };
   };
@@ -736,10 +831,28 @@ in
         message = "services.llamaServers.cloudModels: a name must not also be a local model.";
       }
       {
-        assertion = lib.all (n: cfg.models ? ${n} || cfg.cloudModels ? ${n}) (
+        assertion = lib.all (n: !(cfg.models ? ${n} || cfg.cloudModels ? ${n})) (
+          lib.attrNames cfg.anthropicModels
+        );
+        message = "services.llamaServers.anthropicModels: a name must not also be a local or cloud model.";
+      }
+      {
+        assertion = cfg.anthropicModels == { } || cfg.anthropicApiKeyFile != null;
+        message = "services.llamaServers.anthropicModels needs anthropicApiKeyFile.";
+      }
+      {
+        assertion = lib.all (n: cfg.models ? ${n}) (lib.attrNames cfg.timeouts);
+        message = "services.llamaServers.timeouts: every key must be a local model.";
+      }
+      {
+        assertion = lib.all (n: !(cfg.overflow ? ${n})) (lib.attrNames cfg.timeouts);
+        message = "services.llamaServers.timeouts: a model in overflow takes overflow.<name>.timeout instead.";
+      }
+      {
+        assertion = lib.all (n: cfg.models ? ${n} || cfg.cloudModels ? ${n} || cfg.anthropicModels ? ${n}) (
           lib.concatLists (lib.attrValues cfg.extraFallbacks)
         );
-        message = "services.llamaServers.extraFallbacks: every target must be a local or cloud model.";
+        message = "services.llamaServers.extraFallbacks: every target must be a local, cloud or Anthropic model.";
       }
     ];
 
@@ -754,9 +867,11 @@ in
         Restart = "on-failure";
         RestartSec = "5s";
       }
-      # llama-server children inherit all four.
+      # llama-server children inherit the cgroup settings.
       // lib.optionalAttrs (rc.cpuWeight != null) { CPUWeight = rc.cpuWeight; }
       // lib.optionalAttrs (rc.memoryHigh != null) { MemoryHigh = rc.memoryHigh; }
+      // lib.optionalAttrs (rc.memoryMax != null) { MemoryMax = rc.memoryMax; }
+      // lib.optionalAttrs (rc.oomPolicy != null) { OOMPolicy = rc.oomPolicy; }
       // lib.optionalAttrs (rc.oomScoreAdjust != null) { OOMScoreAdjust = rc.oomScoreAdjust; }
       // lib.optionalAttrs (rc.allowedCPUs != null) { AllowedCPUs = rc.allowedCPUs; };
       Install.WantedBy = [ "default.target" ];
@@ -790,7 +905,9 @@ in
         TimeoutStopSec = 10;
         Restart = "on-failure";
         RestartSec = "5s";
-      };
+      }
+      // lib.optionalAttrs (grc.cpuWeight != null) { CPUWeight = grc.cpuWeight; }
+      // lib.optionalAttrs (grc.memoryHigh != null) { MemoryHigh = grc.memoryHigh; };
       Install.WantedBy = [ "default.target" ];
     };
   };
