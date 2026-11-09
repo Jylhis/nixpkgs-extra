@@ -239,7 +239,9 @@ runCases "home-llama-servers" {
     (expect (!(local.systemd.user.services.llama-swap.Service ? OOMPolicy)) "OOMPolicy set by default")
     (expect (gw.CPUWeight == 80) "gateway cpuWeight")
     (expect (gw.MemoryHigh == "1G") "gateway memoryHigh")
-    (expect (!(local.systemd.user.services.bifrost.Service ? CPUWeight)) "gateway CPUWeight set by default")
+    (expect (
+      !(local.systemd.user.services.bifrost.Service ? CPUWeight)
+    ) "gateway CPUWeight set by default")
   ];
 
   bifrost-config = allOf [
@@ -285,9 +287,13 @@ runCases "home-llama-servers" {
         }
       ]
     ) "anthropic route")
-    (expect ((rule "route-claude-fast").fallbacks == [ "openrouter/vendor/vision" ]) "anthropic fallback")
+    (expect (
+      (rule "route-claude-fast").fallbacks == [ "openrouter/vendor/vision" ]
+    ) "anthropic fallback")
     (expect (bf.providers ? "local-900s") "timeouts provider missing")
-    (expect (bf.providers.local-900s.network_config.default_request_timeout_in_seconds == 900) "timeouts value")
+    (expect (
+      bf.providers.local-900s.network_config.default_request_timeout_in_seconds == 900
+    ) "timeouts value")
     (expect (bf.mcp.tool_manager_config.disable_auto_tool_inject) "auto tool inject not disabled")
     (expect (!(localBf.mcp ? tool_manager_config)) "tool manager config set by default")
     (expect (!(lib.hasInfix "/run/user" (builtins.toJSON bf))) "a key path leaked into config.json")

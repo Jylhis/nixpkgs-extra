@@ -2157,7 +2157,7 @@ pkgs.llm-agents.agentsview
 
 
 
-Directory of the SQLite index; agentsview creates it\.
+Directory of the SQLite index and config\.toml; agentsview creates it\.
 
 
 
@@ -2170,6 +2170,377 @@ string
 
 ```nix
 "${config.home.homeDirectory}/.agentsview"
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.environment
+
+
+
+Extra environment of the service and the maintenance units\. A dead
+proxy here keeps agentsview offline if a firewall rule fails (Go
+never proxies loopback, so the UI and the gateway still work)\.
+
+
+
+*Type:*
+attribute set of string
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+
+
+*Example:*
+
+```nix
+{
+  HTTP_PROXY = "http://127.0.0.1:9";
+}
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.llama\.enable
+
+
+
+Whether to enable semantic search and Recall extraction through the model gateway of ` services.llamaServers `\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+false
+```
+
+
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.llama\.apiKeyFile
+
+
+
+File holding the gateway bearer key, passed to the unit as a credential\.
+
+
+
+*Type:*
+null or absolute path
+
+
+
+*Default:*
+
+```nix
+config.services.llamaServers.masterKeyFile
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.llama\.dimension
+
+
+
+Vector dimension of the embedding model\.
+
+
+
+*Type:*
+positive integer, meaning >0
+
+
+
+*Example:*
+
+```nix
+4096
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.llama\.embeddingModel
+
+
+
+Gateway model name used for embeddings (a key of ` services.llamaServers.models `)\.
+
+
+
+*Type:*
+string
+
+
+
+*Example:*
+
+```nix
+"qwen3-emb-8b"
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.llama\.endpoint
+
+
+
+OpenAI-compatible base URL of the gateway\.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+config.services.llamaServers.gatewayURL
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.llama\.extractModel
+
+
+
+Gateway model name used for Recall extraction: a key of
+` services.llamaServers.models ` or ` anthropicModels `\. A large local
+model on the CPU can hold many GB for days of backlog, so a cloud
+model is often the better choice\.
+
+
+
+*Type:*
+string
+
+
+
+*Example:*
+
+```nix
+"claude-haiku"
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.llama\.queryPrefix
+
+
+
+Prefix agentsview puts before search queries, for instruction-tuned
+embedding models\. Null sends the query as is\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+
+
+*Example:*
+
+```nix
+''
+  Instruct: Given a search query, retrieve relevant passages from coding agent session transcripts
+  Query:''
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.lowPriority
+
+
+
+Run the units at Nice 10, idle I/O class and CPUWeight 20: indexing must not compete with the desktop\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.maintenance\.enable
+
+
+
+Run the periodic secrets scan and database compaction\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.maintenance\.compact\.onCalendar
+
+
+
+Schedule of ` agentsview db compact --yes `\.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"weekly"
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.maintenance\.secretsScan\.onCalendar
+
+
+
+Schedule of ` agentsview secrets scan --backfill `\. Recall extraction
+only takes sessions with a full secret scan\.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"daily"
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.memoryHigh
+
+
+
+MemoryHigh of the service (throttling starts here)\.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"2G"
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.memoryMax
+
+
+
+MemoryMax of the service (the OOM limit)\.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"4G"
 ```
 
 *Declared by:*
@@ -2240,7 +2611,8 @@ list of string
 
 
 
-Session roots the unit sees read-only\.
+Session roots the unit sees read-only\. With ` sandbox.enable ` the whole
+home is read-only already; list roots outside the home here\.
 
 
 
@@ -2259,6 +2631,62 @@ map (p: "${config.home.homeDirectory}/" + p) [
   ".hermes"
 ]
 
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.sandbox\.enable
+
+
+
+Mount the home read-only and the system strict, with dataDir the only
+writable path, and set the other systemd sandbox options\. Turn it off
+if a session root needs write access or the sandbox does not start
+in your setup\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/agentsview>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/agentsview)
+
+
+
+## services\.agentsview\.settings
+
+
+
+Top-level tables Nix owns in config\.toml\. Each listed table is
+replaced wholesale at activation; everything else (auth_token,
+cursor_secret) stays agentsview’s\. The daemon reads the file only at
+start, so a change restarts the service\. ` vector ` and ` recall ` are
+always owned: ` llama.enable ` fills them, and without it they are
+written disabled\.
+
+
+
+*Type:*
+TOML value
+
+
+
+*Default:*
+
+```nix
+{ }
 ```
 
 *Declared by:*
@@ -3317,6 +3745,68 @@ true
 
 
 
+## services\.llamaServers\.anthropicApiKeyFile
+
+
+
+File whose whole content is the Anthropic API key\. Required when ` anthropicModels ` is set\.
+
+
+
+*Type:*
+null or absolute path
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/llama-servers>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/llama-servers)
+
+
+
+## services\.llamaServers\.anthropicModels
+
+
+
+Models served by the direct Anthropic API: name clients send ->
+Anthropic model id\. Clients still speak OpenAI-compatible to the
+gateway and Bifrost translates\. Needs ` anthropicApiKeyFile `\. Name a
+` cloudModels ` twin in ` extraFallbacks ` to keep the model reachable
+when Anthropic fails or the credit runs out\.
+
+
+
+*Type:*
+attribute set of string
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+
+
+*Example:*
+
+```nix
+{
+  claude-haiku = "claude-haiku-4-5";
+}
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/llama-servers>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/llama-servers)
+
+
+
 ## services\.llamaServers\.bifrostPackage
 
 
@@ -3448,6 +3938,32 @@ null or absolute path or string
 
 
 
+## services\.llamaServers\.disableMcpAutoToolInject
+
+
+
+Stop Bifrost from adding the tools of ` mcpServers ` to every inference
+request\. Set it when coding agents also use the gateway as an MCP
+upstream, so each tool appears once\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+false
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/llama-servers>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/llama-servers)
+
+
+
 ## services\.llamaServers\.environment
 
 
@@ -3539,6 +4055,70 @@ Loopback port of the model gateway\.
 
 ```nix
 bifrostPort
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/llama-servers>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/llama-servers)
+
+
+
+## services\.llamaServers\.gatewayResourceControl\.cpuWeight
+
+
+
+CPUWeight of the Bifrost gateway unit\. Null keeps systemd’s default\.
+
+
+
+*Type:*
+null or integer between 1 and 10000 (both inclusive)
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+
+
+*Example:*
+
+```nix
+80
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/llama-servers>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/llama-servers)
+
+
+
+## services\.llamaServers\.gatewayResourceControl\.memoryHigh
+
+
+
+Soft memory ceiling (systemd MemoryHigh) of the Bifrost gateway unit\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+
+
+*Example:*
+
+```nix
+"1G"
 ```
 
 *Declared by:*
@@ -4558,6 +5138,74 @@ null
 
 
 
+## services\.llamaServers\.resourceControl\.memoryMax
+
+
+
+Hard memory ceiling (systemd MemoryMax) of llama-swap and its
+children\. Set it above ` memoryHigh ` so mmap’d weights still get
+soft reclaim first; past it the kernel OOM-kills inside this
+cgroup instead of squeezing the session\.
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+
+
+*Example:*
+
+```nix
+"75%"
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/llama-servers>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/llama-servers)
+
+
+
+## services\.llamaServers\.resourceControl\.oomPolicy
+
+
+
+systemd OOMPolicy of llama-swap\. ` continue ` keeps llama-swap and
+the other model servers running when the kernel kills one server\.
+
+
+
+*Type:*
+null or one of “continue”, “stop”, “kill”
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+
+
+*Example:*
+
+```nix
+"continue"
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/llama-servers>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/llama-servers)
+
+
+
 ## services\.llamaServers\.resourceControl\.oomScoreAdjust
 
 
@@ -4632,6 +5280,42 @@ attribute set of anything *(read only)*
 
 *Default:*
 generated from ` models `
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/llama-servers>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/llama-servers)
+
+
+
+## services\.llamaServers\.timeouts
+
+
+
+Request timeout in seconds for slow local models without an
+OpenRouter fallback (` overflow.<name>.timeout ` covers the others and
+wins)\. Bifrost gives each distinct timeout its own local provider\.
+
+
+
+*Type:*
+attribute set of (positive integer, meaning >0)
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+
+
+*Example:*
+
+```nix
+{
+  big-chat = 900;
+}
+```
 
 *Declared by:*
  - [\<nixpkgs-extra/modules/home/llama-servers>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/llama-servers)
