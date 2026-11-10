@@ -15,10 +15,44 @@
   python3,
   autoPatchelfHook,
   nix-update-script,
+  pkg-config,
+  zstd,
+  aws-lc,
 }:
 
 let
-  py = python3.pkgs;
+  # Stopgap for nixpkgs breakage already fixed on master but not yet in the
+  # nixos-unstable revision in flake.lock. Drop it, and the pkg-config, zstd
+  # and aws-lc arguments, once the lock has all three fixes:
+  # - NixOS/nixpkgs#537108 made cargoSetupHook force -sys crates onto system
+  #   libraries, so these Rust extensions need pkg-config and the libraries
+  #   (fixed by NixOS/nixpkgs#584300 and NixOS/nixpkgs#584290).
+  # - geopandas 1.1.4 fails pyogrio mask and geoarrow tests (fixed by the
+  #   1.2.0 bump, NixOS/nixpkgs#584702).
+  python = python3.override {
+    self = python;
+    packageOverrides =
+      _: prev:
+      lib.mapAttrs
+        (
+          name: libs:
+          prev.${name}.overridePythonAttrs (old: {
+            nativeBuildInputs = old.nativeBuildInputs ++ [ pkg-config ];
+            buildInputs = (old.buildInputs or [ ]) ++ libs;
+          })
+        )
+        {
+          tree-sitter-language-pack = [ zstd ];
+          primp = [
+            aws-lc
+            zstd
+          ];
+        }
+      // {
+        geopandas = prev.geopandas.overridePythonAttrs { doCheck = false; };
+      };
+  };
+  py = python.pkgs;
 
   # Build a wheel nixpkgs does not ship. Runtime dep-pin checks are off because
   # upstream pins versions newer than nixpkgs carries.
