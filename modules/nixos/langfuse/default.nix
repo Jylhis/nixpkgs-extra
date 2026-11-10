@@ -660,7 +660,7 @@ in
 
       garage = {
         enable = true;
-        package = lib.mkDefault pkgs.garage;
+        package = lib.mkDefault pkgs.garage_2;
         environmentFile = "${secretsDir}/garage.env";
         settings = {
           replication_factor = 1;
