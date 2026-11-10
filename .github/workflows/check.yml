@@ -67,7 +67,7 @@ jobs:
           nixpkgs=$(nix-instantiate --find-file nixpkgs -I nixpkgs=channel:nixos-unstable)
           nix run .#nur-eval -- -nixpkgs "$nixpkgs"
 
-  # Evaluates every flake output on both systems without building: the
+  # Evaluates every flake output without building: the
   # output shape checks of nix flake check that the check job's
   # nix-fast-build skips (modules, overlays, apps, devShells, formatter).
   eval:
@@ -78,9 +78,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
-      - run: nix flake check --no-build --all-systems
+      - run: nix flake check --no-build
 
-  # x86_64-linux only: aarch64-linux is evaluated by the eval job, not built.
   check:
     needs: format
     timeout-minutes: 150

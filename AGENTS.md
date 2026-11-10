@@ -24,7 +24,7 @@ check that enforces each one here, and the submission steps.
   packages built against the module's `pkgs`) and `extraLib`.
 - `modules/<kind>/<name>/test.nix`: eval test, exported as the
   `<kind>-<name>` check. `modules/nixos/<name>/vm-test.nix`: VM test
-  (`vm-<name>`), run on x86_64-linux only.
+  (`vm-<name>`).
 - `overlays/default.nix`: adds every public package at the top level of pkgs.
 - `overrides/<attr>.nix`: a nixpkgs attribute changed in place, applied by
   the opt-in `overlays/overrides.nix` (see Overrides).

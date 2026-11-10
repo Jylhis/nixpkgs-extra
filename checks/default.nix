@@ -3,8 +3,7 @@
 #                            (not those with meta.hydraPlatforms = [ ])
 #   pkgs-<name>-<test>       every derivation in a package's passthru.tests
 #   nixos-<name>, home-<name> modules/<kind>/<name>/test.nix (eval tests)
-#   vm-<name>                modules/nixos/<name>/vm-test.nix (x86_64-linux only:
-#                            GitHub's arm runners have no KVM)
+#   vm-<name>                modules/nixos/<name>/vm-test.nix
 #   override-<name>          every overrides/<name>.nix builds
 #   llm-agents-override-<name> every llm-agents-overrides/<name>.nix builds
 #   llm-agents-ocr-git-path  ocr wrapper puts the pinned git first on PATH
@@ -129,9 +128,7 @@ let
     )
   );
 
-  vmTests = lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") (
-    moduleTests "nixos" "vm-test.nix" "vm"
-  );
+  vmTests = moduleTests "nixos" "vm-test.nix" "vm";
 in
 packageChecks
 // packageTests
