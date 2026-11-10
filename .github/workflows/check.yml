@@ -80,27 +80,18 @@ jobs:
       - uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
       - run: nix flake check --no-build --all-systems
 
+  # x86_64-linux only: aarch64-linux is evaluated by the eval job, not built.
   check:
     needs: format
     timeout-minutes: 150
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            system: x86_64-linux
-          - os: ubuntu-24.04-arm
-            system: aarch64-linux
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
-      # The full check set doesn't fit the x86_64 runner's root disk. Pool
-      # the free space of / and its second disk at /mnt, after deleting
-      # preinstalled toolchains, into one volume at /nix, with swap beside it
-      # for the big C++ and Next.js builds (onnxruntime-vitisai, langfuse).
-      # It has to run before Nix is installed. The arm runner has no second
-      # disk and already fits.
-      - if: matrix.system == 'x86_64-linux'
-        uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
+      # The full check set doesn't fit the runner's root disk. Pool the free
+      # space of / and its second disk at /mnt, after deleting preinstalled
+      # toolchains, into one volume at /nix, with swap beside it for the big
+      # C++ and Next.js builds (langfuse). It has to run before Nix is
+      # installed.
+      - uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
         with:
           build-mount-path: /nix
           root-reserve-mb: 4096
@@ -109,13 +100,6 @@ jobs:
           remove-android: true
           remove-haskell: true
           remove-codeql: true
-      - name: Add swap
-        if: matrix.system != 'x86_64-linux'
-        run: |
-          sudo fallocate -l 8G /swapfile-nix
-          sudo chmod 600 /swapfile-nix
-          sudo mkswap /swapfile-nix
-          sudo swapon /swapfile-nix
       - run: |
           free -h
           df -h
@@ -151,14 +135,14 @@ jobs:
       - name: Build uncached checks
         run: |
           nix run --inputs-from . nixpkgs#nix-fast-build -- \
-            --flake ".#checks.${{ matrix.system }}" \
+            --flake ".#checks.x86_64-linux" \
             --skip-cached --no-nom --max-jobs 1 \
             --eval-workers 2 --eval-max-memory-size 2048 \
             --result-file results.xml --result-format junit
       - if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: results-${{ matrix.system }}
+          name: results-x86_64-linux
           path: results.xml
           if-no-files-found: ignore
 
