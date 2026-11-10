@@ -54,14 +54,14 @@ let
     );
     robot = wheel "robotcode-robot" "sha256-2ZKTfS0vlJ8mexnQnrzoJabcBSPz+3pVaQuxSHSIw+Q=" [
       py.platformdirs
-      py.robotframework
+      robocop.robotframework
       core
     ];
     jsonrpc2 = wheel "robotcode-jsonrpc2" "sha256-XJBm3RSauM9jmG4w2+SzgCaAt+WGZuG8iReUFMhJKlc=" [
       core
     ];
     modifiers = wheel "robotcode-modifiers" "sha256-pGDCHe4JMPOdYoL/0qk8dtoTycFqdLBYw4fngroPzvg=" [
-      py.robotframework
+      robocop.robotframework
     ];
     analyze = wheel "robotcode-analyze" "sha256-Ha6cFJlDjEVxIRxFsUMBczI5eQ+eFBaXlh1yskZC/3M=" [
       plugin

@@ -6,10 +6,24 @@
 {
   lib,
   fetchPypi,
+  fetchpatch,
   python3Packages,
   nix-update-script,
 }:
 
+let
+  # Stopgap until nixpkgs carries robotframework's fix for isatty() on a
+  # detached buffer, which fails its tests on Python 3.14
+  # (robotframework/robotframework#5825). robotcode reuses it via passthru.
+  robotframework = python3Packages.robotframework.overridePythonAttrs (old: {
+    patches = (old.patches or [ ]) ++ [
+      (fetchpatch {
+        url = "https://github.com/robotframework/robotframework/commit/ca249542582f2b5d69a409e32bc7e11967ff7237.patch";
+        hash = "sha256-/Vc5SUPhJkamrJyfgl/9SZb1OiGTsbZMQHDDpizR0L4=";
+      })
+    ];
+  });
+in
 python3Packages.buildPythonPackage (finalAttrs: {
   pname = "robotframework-robocop";
   version = "9.1.2";
@@ -24,17 +38,19 @@ python3Packages.buildPythonPackage (finalAttrs: {
     hash = "sha256-FSzRpmn06BU5JA/z9cVP/ZPRjJ+OwBJg0hAlS/nmnCw=";
   };
 
-  dependencies = with python3Packages; [
+  dependencies = [
+    robotframework
+  ]
+  ++ (with python3Packages; [
     jinja2
     msgpack
     pathspec
     platformdirs
     rich
-    robotframework
     tomli-w
     typer
     typing-extensions
-  ];
+  ]);
 
   pythonImportsCheck = [ "robocop" ];
 
@@ -48,6 +64,7 @@ python3Packages.buildPythonPackage (finalAttrs: {
   '';
 
   passthru = {
+    inherit robotframework;
     category = "Developer tools";
     updateScript = nix-update-script { };
   };
