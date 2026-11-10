@@ -3,6 +3,7 @@
   pkgs,
   module,
   testLib,
+  extraLib,
   ...
 }:
 let
@@ -60,6 +61,22 @@ let
       };
     }
   ];
+  noWrapper = evalHome [
+    module
+    {
+      programs.open-code-review = {
+        enable = true;
+        package = stub;
+        installWrapper = false;
+        viewer.enable = true;
+      };
+    }
+  ];
+  libWrapper = extraLib.openCodeReview.mkWrapper {
+    inherit pkgs;
+    package = stub;
+    telemetry = on.programs.open-code-review.telemetry;
+  };
   activationText = on.home.activation.openCodeReviewConfig.data;
   activationFile = pkgs.writeText "ocr-activation" activationText;
 
@@ -84,6 +101,18 @@ in
     ) "allowed hosts not rendered")
     (expect (on.home.activation ? openCodeReviewConfig) "settings merge activation missing")
   ];
+  wrapper-installed-by-default = expect (wrapperOf on != null) "ocr wrapper missing by default";
+  install-wrapper-off = allOf [
+    (noFailedAssertions noWrapper)
+    (expect (wrapperOf noWrapper == null) "ocr wrapper installed with installWrapper = false")
+    (expect (
+      noWrapper.home.activation ? openCodeReviewConfig
+    ) "settings merge lost without the wrapper")
+    (expect (noWrapper.systemd.user.services ? ocr-viewer) "viewer lost without the wrapper")
+  ];
+  lib-wrapper-is-the-module-wrapper = expect (
+    libWrapper.outPath == (wrapperOf on).outPath
+  ) "lib.openCodeReview.mkWrapper builds another wrapper than the module";
   metrics-on-by-default = expect (
     !lib.hasInfix "OTEL_METRICS_EXPORTER" (wrapperOf on).text
   ) "metrics exporter set by default";
