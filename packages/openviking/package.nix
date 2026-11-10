@@ -3,6 +3,8 @@
   rustPlatform,
   fetchFromGitHub,
   cmake,
+  pkg-config,
+  zstd,
   nix-update-script,
   versionCheckHook,
   writableTmpDirAsHomeHook,
@@ -32,7 +34,12 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   # reqwest is built with rustls-tls (aws-lc-rs backend), which needs cmake
   # at build time. No OpenSSL.
-  nativeBuildInputs = [ cmake ];
+  nativeBuildInputs = [
+    cmake
+    pkg-config
+  ];
+
+  buildInputs = [ zstd ];
 
   # The crate's tests expect a running OpenViking server / network access.
   doCheck = false;
