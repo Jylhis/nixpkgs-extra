@@ -53,6 +53,32 @@ pkgs.llm-agents.open-code-review
 
 
 
+## programs\.open-code-review\.installWrapper
+
+
+
+Whether to install the ` ocr ` wrapper in the Home Manager profile\. Turn it off
+when the wrapper comes from another profile; build it there with
+` lib.openCodeReview.mkWrapper `\. The settings merge and the viewer unit stay\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+*Declared by:*
+ - [\<nixpkgs-extra/modules/home/open-code-review>](https://github.com/Jylhis/nixpkgs-extra/blob/main/modules/home/open-code-review)
+
+
+
 ## programs\.open-code-review\.settings
 
 

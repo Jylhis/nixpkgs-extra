@@ -8,11 +8,13 @@
 # is pruned. An object that pruning leaves empty is removed too.
 #
 # `ocr` is a wrapper that sets the OTEL_* variables (the OTLP protocol and
-# headers have no config key), reading the headers file at run time.
+# headers have no config key), reading the headers file at run time
+# (lib.openCodeReview.mkWrapper).
 {
   config,
   lib,
   pkgs,
+  extraLib,
   ...
 }:
 let
@@ -34,38 +36,10 @@ let
     | . * $new[0]
   '';
 
-  # Without a complete provider in the config file, OCR falls back to Claude
-  # Code's ANTHROPIC_* variables. Those credentials are for the Claude Code
-  # harness only, so the wrapper drops them and OCR fails instead.
-  resourceAttributes = lib.concatStringsSep "," (
-    lib.mapAttrsToList (k: v: "${k}=${v}") cfg.telemetry.resourceAttributes
-  );
-
-  # A missing or unreadable headers file (the backend not started yet) runs the
-  # review without telemetry rather than failing it.
-  wrapper = pkgs.writeShellScriptBin "ocr" (
-    ''
-      unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_API_KEY ANTHROPIC_MODEL
-    ''
-    + lib.optionalString cfg.telemetry.enable ''
-      if headers=$(${lib.getExe pkgs.jq} -r \
-          'to_entries | map("\(.key)=\(.value | @uri)") | join(",")' \
-          ${lib.escapeShellArg cfg.telemetry.headersFile} 2>/dev/null); then
-        export OCR_ENABLE_TELEMETRY=1
-        export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-        export OTEL_EXPORTER_OTLP_ENDPOINT=${lib.escapeShellArg cfg.telemetry.endpoint}
-        export OTEL_EXPORTER_OTLP_HEADERS="$headers"
-        export OTEL_SERVICE_NAME=${lib.escapeShellArg cfg.telemetry.serviceName}
-        ${lib.optionalString (!cfg.telemetry.metrics.enable) "export OTEL_METRICS_EXPORTER=none"}
-        ${lib.optionalString (cfg.telemetry.resourceAttributes != { }) ''
-          export OTEL_RESOURCE_ATTRIBUTES=${lib.escapeShellArg resourceAttributes}
-        ''}
-      fi
-    ''
-    + ''
-      exec ${lib.getExe cfg.package} "$@"
-    ''
-  );
+  wrapper = extraLib.openCodeReview.mkWrapper {
+    inherit pkgs;
+    inherit (cfg) package telemetry;
+  };
 in
 {
   options.programs.open-code-review = {
@@ -78,6 +52,16 @@ in
       description = ''
         The open-code-review package. Comes from numtide/llm-agents.nix: apply its
         `overlays.shared-nixpkgs` or set this option.
+      '';
+    };
+
+    installWrapper = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Whether to install the `ocr` wrapper in the Home Manager profile. Turn it off
+        when the wrapper comes from another profile; build it there with
+        `lib.openCodeReview.mkWrapper`. The settings merge and the viewer unit stay.
       '';
     };
 
@@ -180,7 +164,7 @@ in
         ];
       }
       (lib.mkIf (cfg.package != null) {
-        home.packages = [ wrapper ];
+        home.packages = lib.optional cfg.installWrapper wrapper;
 
         home.activation.openCodeReviewConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           conf=${lib.escapeShellArg configFile}
