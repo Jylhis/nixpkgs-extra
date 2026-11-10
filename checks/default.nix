@@ -36,12 +36,7 @@ let
 
   # meta.hydraPlatforms = [ ] marks a package too slow to build in CI, as in
   # nixpkgs. The eval and nur-eval jobs still evaluate it.
-  ciPackages = lib.filterAttrs (
-    _: pkg:
-    lib.elem pkgs.stdenv.hostPlatform.system (
-      pkg.meta.hydraPlatforms or [ pkgs.stdenv.hostPlatform.system ]
-    )
-  ) packages;
+  ciPackages = lib.filterAttrs (_: pkg: pkg.meta.hydraPlatforms or null != [ ]) packages;
 
   packageChecks = lib.mapAttrs' (
     name: pkg: lib.nameValuePair "pkgs-${name}" (import ./fhs-layout.nix { inherit pkgs; } name pkg)
