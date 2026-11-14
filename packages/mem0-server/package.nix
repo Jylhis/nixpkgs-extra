@@ -25,6 +25,15 @@ python3Packages.buildPythonApplication (finalAttrs: {
 
   patches = [ ./config-file.patch ];
 
+  # nixpkgs marks python-jose insecure; auth.py only signs and verifies
+  # HS256 tokens, which PyJWT does with the same calls.
+  postPatch = ''
+    substituteInPlace server/auth.py \
+      --replace-fail "from jose import JWTError, jwt" \
+        "import jwt
+    from jwt import PyJWTError as JWTError"
+  '';
+
   dependencies =
     (with python3Packages; [
       alembic
@@ -38,8 +47,8 @@ python3Packages.buildPythonApplication (finalAttrs: {
       psycopg
       psycopg-pool
       pydantic
+      pyjwt
       python-dotenv
-      python-jose
       slowapi
       sqlalchemy
       uvicorn
