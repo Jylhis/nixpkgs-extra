@@ -12,7 +12,7 @@ check that enforces each one here, and the submission steps.
   `{ lib, packages, scope, overrides, nixosModules, homeModules, overlays }`. Without
   arguments it uses the nixpkgs revision in `flake.lock`.
 - `flake.nix`: wraps `default.nix` per system and adds `checks`, `formatter`,
-  `apps.update-docs`, `apps.nur-eval` and a dev shell.
+  `apps.update`, `apps.update-docs`, `apps.nur-eval` and a dev shell.
 - `nur.nix`: the NUR entry point (see NUR).
 - `packages/<name>/package.nix`: one directory per package, auto-discovered.
   Every package is called from one scope (`packages/default.nix`) that holds
@@ -51,7 +51,9 @@ check that enforces each one here, and the submission steps.
 - Regenerate docs after changing packages or options: `nix run .#update-docs`.
 - Lint commit messages: `nix run .#lint-commits -- main`.
 - Run NUR's evaluation check: `nix run .#nur-eval [-- -nixpkgs <path>]`.
-- Update a package: `nix run nixpkgs#nix-update -- --flake <name>`.
+- Update packages, as the update workflow does (nix-update, build, docs):
+  `nix run .#update [-- <name>...]`; without names, every package that has
+  an `updateScript`.
 
 ## Naming
 

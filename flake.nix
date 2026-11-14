@@ -93,6 +93,15 @@
           type = "app";
           program = lib.getExe (import ./scripts/nur-eval/package.nix { pkgs = pkgsFor.${system}; });
         };
+        update = {
+          type = "app";
+          program = lib.getExe (
+            import ./scripts/update.nix {
+              pkgs = pkgsFor.${system};
+              packages = self.packages.${system};
+            }
+          );
+        };
         update-docs = {
           type = "app";
           program = lib.getExe (

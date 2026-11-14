@@ -147,6 +147,8 @@ packageChecks
   upstream-targets = callCheck ./upstream-targets.nix;
   # Builds lint-commits, running its Go tests.
   lint-commits = import ../scripts/lint-commits/package.nix { inherit pkgs repo; };
+  # Builds the update app, running shellcheck on it.
+  update = import ../scripts/update.nix { inherit pkgs packages; };
   no-nixpkgs-clash = callCheck ./no-nixpkgs-clash.nix;
   overrides-target-exists = callCheck ./overrides-target-exists.nix;
   llm-agents-target-exists = callCheck ./llm-agents-target-exists.nix;
