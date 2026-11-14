@@ -12,16 +12,16 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "openviking";
-  version = "0.5.2.1";
+  version = "0.5.5";
 
   src = fetchFromGitHub {
     owner = "volcengine";
     repo = "OpenViking";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-v84jdUJuJvc435VeP2IuyvuQXCMWh2fFwFwkroPJXEk=";
+    hash = "sha256-Kj/dvrgXpvkYeRWubibs3eLYxk20SjOXxeB9tawFMSI=";
   };
 
-  cargoHash = "sha256-I9RMJQOeJKC9PMaKKhBCsTOZIr1vV6pcLjB6XxFUzFE=";
+  cargoHash = "sha256-Fbh/mz3OdZt/7Lix6EEX5uCnasPUmUnj9FYO86fme60=";
 
   # The repo is a Cargo workspace (crates/ov_cli, crates/ragfs,
   # crates/ragfs-python). Build and test only the CLI crate so we never
