@@ -1,13 +1,12 @@
 # Langfuse from source: Next.js web, worker, and a migrate wrapper. Run by
 # the services.langfuse NixOS module. nix-update bumps
-# version/src/pnpmDeps/cargoDeps; the patched clickhouse crate is bumped by
-# hand (postPatch fails loudly when upstream moves it or the pnpm major).
+# version/src/pnpmDeps/cargoDeps; postPatch fails loudly when upstream moves
+# the pnpm major.
 {
   lib,
   stdenv,
   stdenvNoCC,
   fetchFromGitHub,
-  fetchurl,
   fetchPnpmDeps,
   pnpmConfigHook,
   pnpm_12,
@@ -24,30 +23,27 @@
 }:
 
 let
-  version = "4.56.0";
+  version = "4.80.0";
 
   src = fetchFromGitHub {
     owner = "langfuse";
     repo = "langfuse";
     tag = "v${version}";
-    hash = "sha256-nSnGy2NjjIijsd2tXe+dMjnxx1cvbPfhKPB+kJVtuII=";
+    hash = "sha256-+VJYTwzBtNaF/weRW5eUboNGAXoC7p1oHbojsK8Iq2k=";
   };
 
   pnpm = pnpm_12;
   nodejs = nodejs_24;
 
+  # pnpm 12.9 (nixpkgs) cannot parse the `lockfile:` map that upstream's
+  # pnpm 12.16 workspace file uses; it only tunes lockfile reuse.
+  dropLockfileSetting = ''
+    sed -i '/^lockfile:$/,/^[^ #]/{/^lockfile:$/d;/^  /d}' pnpm-workspace.yaml
+  '';
+
   prismaEngine = "${lib.getLib prisma-engines_6}/lib/libquery_engine.node";
 
   migrate = go-migrate.overrideAttrs { tags = [ "clickhouse" ]; };
-
-  clickhouseCrate = rec {
-    version = "0.15.2";
-    src = fetchurl {
-      name = "clickhouse-${version}.tar.gz";
-      url = "https://crates.io/api/v1/crates/clickhouse/${version}/download";
-      hash = "sha256-dlQVT95Nl+wTIb/kw5ZVcL5vzQngkdqK/DFmq17ie+I=";
-    };
-  };
 
   # napi-rs names the addon after the platform; index.js loads it by that name.
   napiPlatform =
@@ -64,27 +60,7 @@ let
     inherit version src;
     sourceRoot = "${src.name}/packages/native";
 
-    cargoHash = "sha256-tgWXc1V7wi0P7reGhlotZHosU6PkVCGtuRJra1w6qj8=";
-
-    postPatch = ''
-      if ! grep -qx 'crate_version=${clickhouseCrate.version}' scripts/prepare-clickhouse-rs.sh; then
-        echo "prepare-clickhouse-rs.sh no longer pins clickhouse ${clickhouseCrate.version}; update clickhouseCrate" >&2
-        exit 1
-      fi
-
-      # What prepare-clickhouse-rs.sh does, minus the download: Cargo.lock
-      # expects the patched crate as a path dependency, so the vendor dir
-      # lacks it.
-      crate=$NIX_BUILD_TOP/clickhouse-${clickhouseCrate.version}
-      tar -xzf ${clickhouseCrate.src} -C $NIX_BUILD_TOP
-      patch --directory="$crate" --strip=1 \
-        < patches/clickhouse-${clickhouseCrate.version}-native-encoder.patch
-      mkdir -p .cargo
-      cat >> .cargo/config.toml <<EOF
-      [patch.crates-io]
-      clickhouse = { path = "$crate" }
-      EOF
-    '';
+    cargoHash = "sha256-uiPHcwsixc5yBmKY9Ry1MSNVlJap7tJt1Xkd49/4/ss=";
 
     # As upstream's rust:test script.
     checkFeatures = [ "napi/dyn-symbols" ];
@@ -142,8 +118,9 @@ stdenv.mkDerivation (finalAttrs: {
       pnpmWorkspaces
       ;
     inherit pnpm;
+    postPatch = dropLockfileSetting;
     fetcherVersion = 4;
-    hash = "sha256-7Dam4quQqJFUtCBjivjLUgvWl6Lc+e4EyKxB5jh4zRg=";
+    hash = "sha256-iWxOs4i4AYKlzzM+nG92MKy1j1IgbjhZymdU4moHEa0=";
   };
 
   nativeBuildInputs = [
@@ -168,12 +145,12 @@ stdenv.mkDerivation (finalAttrs: {
 
   postPatch = ''
     pinned=$(node -p 'require("./package.json").engines.pnpm')
-    # Same major, not older: older minors reject newer pnpm-workspace settings.
-    oldest=$(printf '%s\n' "$pinned" "${pnpm.version}" | sort -V | head -n1)
-    if [ "''${pinned%%.*}" != "${pnpm.majorVersion}" ] || [ "$oldest" != "$pinned" ]; then
+    if [ "''${pinned%%.*}" != "${pnpm.majorVersion}" ]; then
       echo "upstream pins pnpm $pinned, this package builds with pnpm ${pnpm.version}" >&2
       exit 1
     fi
+
+    ${dropLockfileSetting}
 
     cp ${native}/lib/*.node packages/native/
 
@@ -186,6 +163,7 @@ stdenv.mkDerivation (finalAttrs: {
 
     pnpm --filter=@langfuse/shared run db:generate
     pnpm --filter=@langfuse/shared run build
+    pnpm --filter=@langfuse/icons run build
 
     NODE_OPTIONS=--max-old-space-size=8192 pnpm --filter=web run build
     pnpm --filter=worker run build
