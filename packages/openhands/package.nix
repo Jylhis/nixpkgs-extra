@@ -13,12 +13,12 @@
 }:
 
 let
-  version = "1.34.0";
+  version = "1.40.0";
 
   src = fetchgit {
     url = "https://github.com/OpenHands/OpenHands.git";
     tag = "v${version}";
-    hash = "sha256-TwESQz+yNjeIa30GMLP7HwiQRucZ4DwwbOEAq2ibzm8=";
+    hash = "sha256-2wBUVpgw3Nv/1oVy/OQr5rA0Eo+zzgYjnsKHB23aIsM=";
   };
 
   # nixpkgs moved mcp to 2.x and marks fastmcp-slim (hence fastmcp, which
@@ -86,22 +86,21 @@ let
       pythonImportsCheck = [ ];
     };
 
-  # agent-client-protocol: upstream pins acp<0.11 (0.11 reordered prompt()
-  # args and breaks the SDK's ACP client); take 0.10.1 from its own wheel.
+  # agent-client-protocol: the SDK needs >=0.12.1,<0.13, newer than nixpkgs.
   agent-client-protocol = mkWheel {
     pname = "agent-client-protocol";
-    version = "0.10.1";
-    url = "https://files.pythonhosted.org/packages/7b/18/d8c7ff337cf621ea79a84006a7252ff057bfb5767549bb102cc6649f4ec2/agent_client_protocol-0.10.1-py3-none-any.whl";
-    hash = "sha256-oD0xmPTXcvLg7AEsAKwczhMbRxAiCj3J+uPJkdBHx1A=";
+    version = "0.12.1";
+    url = "https://files.pythonhosted.org/packages/21/61/0a2186c8ca53cf464767d4c4fb7fd9e23f48ce4547c2fa0d1c83a4d52410/agent_client_protocol-0.12.1-py3-none-any.whl";
+    hash = "sha256-qvPMMB7YfZ4sTMuRrf4c1YeENV9s5+UT9Q58ojkYYu8=";
     deps = [ py.pydantic ];
   };
 
   # openhands-sdk. lmnr is imported lazily, only with LMNR_* env, so omitted.
   openhands-sdk = mkWheel {
     pname = "openhands-sdk";
-    version = "1.42.1";
-    url = "https://files.pythonhosted.org/packages/ec/40/cad4dc348017c3c292804acca04e8c75da726c7631bf8de48d9e7c6dc130/openhands_sdk-1.42.1-py3-none-any.whl";
-    hash = "sha256-EK89bK8Qdey7hSDbEVDA7AF57jUrGfA5XSJzr9pgBNI=";
+    version = "1.62.0";
+    url = "https://files.pythonhosted.org/packages/81/d5/f4aa93b38330f280966faaad78279af618f1b54c79cf6dec88c17fefe8b8/openhands_sdk-1.62.0-py3-none-any.whl";
+    hash = "sha256-H/CD9b/2CQxuPwU27S0+r/IUVTbOVMvPUPNWYWdYcGU=";
     deps = [
       agent-client-protocol
     ]
@@ -129,9 +128,9 @@ let
   # heavy trees, so they are omitted.
   openhands-tools = mkWheel {
     pname = "openhands-tools";
-    version = "1.42.1";
-    url = "https://files.pythonhosted.org/packages/58/51/b3c3f1a0375ce88a9befa73e6ee0212efb0e08a16de122cbd19274d8b1b0/openhands_tools-1.42.1-py3-none-any.whl";
-    hash = "sha256-ONY8jzFv3Sc2SpaiqH4cCQ/NTRBW3gJpnkoWA0WYUQY=";
+    version = "1.62.0";
+    url = "https://files.pythonhosted.org/packages/f7/a5/6fa1386eeef2c614c2eb1c121784c83a6f7631822c538bd394bf398a1448/openhands_tools-1.62.0-py3-none-any.whl";
+    hash = "sha256-pMoQCdUOn7y1Y5BLQ5LFLdW4ViMxOCsCKE01VOzrNpk=";
     deps = [
       openhands-sdk
     ]
@@ -140,6 +139,7 @@ let
       cachetools
       func-timeout
       libtmux
+      psutil
       pydantic
       tree-sitter
       tree-sitter-bash
@@ -148,9 +148,9 @@ let
 
   openhands-agent-server = mkWheel {
     pname = "openhands-agent-server";
-    version = "1.42.1";
-    url = "https://files.pythonhosted.org/packages/72/8c/e3e28a7051191f9dc319efc205c257646896a62c249cb165f74bddf151be/openhands_agent_server-1.42.1-py3-none-any.whl";
-    hash = "sha256-dypzsZaErKtfn2GxwkTxVgUmJa3lGl5IpCSzwTA596c=";
+    version = "1.62.0";
+    url = "https://files.pythonhosted.org/packages/e8/a9/16c018d532c56d4954368344495db3bc7746db40104325de55239932b7cd/openhands_agent_server-1.62.0-py3-none-any.whl";
+    hash = "sha256-5N9qrLV8IJ1xrqJnOWV90Qw2xfSS8VWxbMEqYiSvsp8=";
     deps = [
       openhands-sdk
     ]
@@ -160,6 +160,7 @@ let
       docker
       fastapi
       openai
+      opentelemetry-sdk
       pydantic
       sqlalchemy
       uvicorn
@@ -170,9 +171,9 @@ let
 
   openhands-workspace = mkWheel {
     pname = "openhands-workspace";
-    version = "1.42.1";
-    url = "https://files.pythonhosted.org/packages/cc/1f/2ef9b56751b64a65a798c46a77e66ce3f8506fbd061bdb07c5bef6e4440b/openhands_workspace-1.42.1-py3-none-any.whl";
-    hash = "sha256-f2MsqxsABcemI+rho//S4bkVb/yV2H47z3CY+C6uHl0=";
+    version = "1.62.0";
+    url = "https://files.pythonhosted.org/packages/3d/9f/c0dd82a8ce87b1df3d29c299bd62d606cb1cd38ac50f4b81d2adb650c3b6/openhands_workspace-1.62.0-py3-none-any.whl";
+    hash = "sha256-y7ZBXlm/37mSK4K5PzuvWl7Y8Ozje7aV88B9kTzou5Q=";
     deps = [
       openhands-sdk
       openhands-agent-server
@@ -184,15 +185,16 @@ let
   # lazily) is omitted.
   openhands-automation = mkWheel {
     pname = "openhands-automation";
-    version = "1.7.1";
-    url = "https://files.pythonhosted.org/packages/48/87/a727538e902bb5f28ea1396e8a0b33ec3758dd405abaa5c54422c9d0fc18/openhands_automation-1.7.1-py3-none-any.whl";
-    hash = "sha256-BoP4L1HorJ1yZwUfNilJwLHmMvrcFZnwUyI8RYbB7KA=";
+    version = "1.32.1";
+    url = "https://files.pythonhosted.org/packages/a6/76/5f648e928577db4ef75774ea13b75b7e3cff4b6fec83c848ff052d5dc0aa/openhands_automation-1.32.1-py3-none-any.whl";
+    hash = "sha256-TqqZF/iOU8+95HwwImXmHdaS4/iLJC7J7vqn0pAbOBs=";
     deps = [
       openhands-sdk
       openhands-workspace
     ]
     ++ (with py; [
       aiosqlite
+      aiohttp
       alembic
       asyncpg
       boto3
@@ -208,7 +210,10 @@ let
       pydantic-settings
       pyjwt
       python-json-logger
+      pyyaml
+      slack-sdk
       sqlalchemy
+      starlette
       tenacity
       tzdata
       uvicorn
@@ -236,7 +241,7 @@ buildNpmPackage {
 
   # Hash of the npm dependency closure from the fixed-up package-lock.json;
   # refresh with `lib.fakeHash` if the pin or lockfile changes.
-  npmDepsHash = "sha256-J5V1XwJ46Zd53bOdTqHhYatCnPA7ixh4C2JkuLUu/JY=";
+  npmDepsHash = "sha256-JA50BWVitsk6burNjyBT85wq5T2FRlwD1pef/F7z3iQ=";
 
   nativeBuildInputs = [ makeWrapper ];
 
@@ -246,9 +251,13 @@ buildNpmPackage {
 
   # prefetch-npm-deps rejects missing integrity fields. Drop the bundled
   # wasm32-wasi fallback dependencies and restore @babel/runtime's integrity.
+  # Drop @eslint/js's optional peer on eslint ^10 (locked eslint is 9.39.5):
+  # npm would re-resolve it from the registry, which is offline.
   postPatch = ''
     ${lib.getExe jq} '(.packages |= with_entries(
            select(.key | contains("oxide-wasm32-wasi/node_modules/") | not)))
+        | del(.packages["node_modules/@eslint/js"].peerDependencies,
+               .packages["node_modules/@eslint/js"].peerDependenciesMeta)
         | .packages["node_modules/@babel/runtime"].integrity =
             "sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw=="' \
       package-lock.json > package-lock.json.tmp
