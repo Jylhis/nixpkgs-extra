@@ -12,13 +12,7 @@ buildNpmPackage {
 
   sourceRoot = "${src.name}/src/web-app";
 
-  # Upstream ships no lockfile; this one comes from
-  # `npm install --package-lock-only`. Refresh on dep bumps.
-  postPatch = ''
-    cp ${./web-app-package-lock.json} ./package-lock.json
-  '';
-
-  npmDepsHash = "sha256-Ovloy6fA9UEQ6SzVgiFeFt1ysgakt9bN2ZgJkEwtSFI=";
+  npmDepsHash = "sha256-oNxXTgyz9qgdBn1mrZj53NA3aeg97ySx5tnqDPX7f2Q=";
 
   # webpack.config.js resolves ../app/src/renderer/index.tsx, so the sibling
   # src/app/ must exist; fail loudly if upstream rearranges that.

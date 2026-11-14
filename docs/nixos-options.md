@@ -673,8 +673,8 @@ one of “gfx1150”, “gfx1151”
 
 
 
-Lemonade server package\. It must carry the LEMONADE_DEFAULTS_PATH
-patch that the lemonade-server package applies\.
+Lemonade server package\. It must read LEMONADE_DEFAULTS_PATH
+(lemonade 2026\.46 or later)\.
 
 
 

@@ -114,7 +114,7 @@ let
     };
 
   # defaults.json seed merged over lemonade's packaged defaults (via the
-  # LEMONADE_DEFAULTS_PATH patch in lemonade-server). v10.7.0 removed the env
+  # LEMONADE_DEFAULTS_PATH, read by lemonade since 2026.46). v10.7.0 removed the env
   # hooks for these keys.
   lemonadeDefaults = {
     # 0 disables lemond's 300s cutoff (lemonade#1364), but vLLM reads it as
@@ -300,8 +300,8 @@ in
         default = extraPkgs.lemonade-server.override { withDesktopApp = cfg.lemonade.desktopApp.enable; };
         defaultText = lib.literalExpression "pkgs.lemonade-server.override { withDesktopApp = config.hardware.amd-npu.lemonade.desktopApp.enable; }";
         description = ''
-          Lemonade server package. It must carry the LEMONADE_DEFAULTS_PATH
-          patch that the lemonade-server package applies.
+          Lemonade server package. It must read LEMONADE_DEFAULTS_PATH
+          (lemonade 2026.46 or later).
         '';
       };
 
@@ -580,7 +580,7 @@ in
       }
       // optionalAttrs cfg.enableLemonade {
         # Point the lemonade CLI / desktop app at the generated seed (see
-        # LEMONADE_DEFAULTS_PATH patch).
+        # lemonadeDefaults).
         LEMONADE_DEFAULTS_PATH = lemonadeDefaultsFile;
       }
       // optionalAttrs (cfg.enableLemonade && cfg.enableROCm) {
