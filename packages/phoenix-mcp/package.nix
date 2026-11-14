@@ -12,11 +12,11 @@
 
 buildNpmPackage (finalAttrs: {
   pname = "phoenix-mcp";
-  version = "4.3.17";
+  version = "4.3.20";
 
   src = fetchurl {
     url = "https://registry.npmjs.org/@arizeai/phoenix-mcp/-/phoenix-mcp-${finalAttrs.version}.tgz";
-    hash = "sha512-9tv54LS3BhfVrSxGrtg0bjv2DwQ7HTa/XtZPh8Yjm70kPk38NokqmKP2ap4i/jWWOG2PxConNCrO23hnNa22nA==";
+    hash = "sha256-S8uVwNU1CK1a+RVCUde+dStMDAUasKnqUOjTV/A8U4U=";
   };
   sourceRoot = "package";
 
@@ -31,7 +31,7 @@ buildNpmPackage (finalAttrs: {
     mv package.json.new package.json
   '';
 
-  npmDepsHash = "sha256-nzfyhSPTzIH0EhqiI14XbKVNAf0pu8XyGD8ayORkJRw=";
+  npmDepsHash = "sha256-QFAgxtq5Hok9ROf9OEUGbTCeHDoYQ5eCl9tmpQJSfu0=";
   dontNpmBuild = true;
 
   # The server has no --help; an MCP initialize over stdio proves it starts.
