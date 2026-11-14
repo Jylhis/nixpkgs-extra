@@ -11,14 +11,14 @@
 }:
 stdenv.mkDerivation (_finalAttrs: {
   pname = "ds4";
-  version = "0-unstable-2026-06-17";
+  version = "0-unstable-2026-11-03";
 
   # Upstream publishes no tags, so the commit is pinned.
   src = fetchFromGitHub {
     owner = "antirez";
     repo = "ds4";
-    rev = "80ebbc396aee40eedc1d829222f3362d10fa4c6c";
-    hash = "sha256-Ieuc72GHZs20ModQfnvI5Me31n4Pj+WFYtsuqaKJceo=";
+    rev = "b3f50180ec2c7324892be1f50bc83555ccb8d5e7";
+    hash = "sha256-XccxnYqo33w1mNZNAMFx/rdPhO57lxQ/oKPGSyxzh0E=";
   };
 
   # clr ships the hipcc wrapper (+ amdclang++) and the HIP runtime headers.
@@ -29,6 +29,7 @@ stdenv.mkDerivation (_finalAttrs: {
     rocmPackages.hipblas-common
     rocmPackages.hipblaslt
     rocmPackages.hipcub
+    rocmPackages.rocblas
     rocmPackages.rocprim
     rocmPackages.rocwmma
   ];
@@ -52,13 +53,16 @@ stdenv.mkDerivation (_finalAttrs: {
       "-I${rocmPackages.hipblas}/include"
       "-I${rocmPackages.hipblas-common}/include"
       "-I${rocmPackages.hipcub}/include"
+      "-I${rocmPackages.rocblas}/include"
       "-I${rocmPackages.rocprim}/include"
     ];
     HIPCC_LINK_FLAGS_APPEND = toString [
       "-L${rocmPackages.hipblas}/lib"
       "-L${rocmPackages.hipblaslt}/lib"
+      "-L${rocmPackages.rocblas}/lib"
       "-Wl,-rpath,${rocmPackages.hipblas}/lib"
       "-Wl,-rpath,${rocmPackages.hipblaslt}/lib"
+      "-Wl,-rpath,${rocmPackages.rocblas}/lib"
     ];
   };
 
