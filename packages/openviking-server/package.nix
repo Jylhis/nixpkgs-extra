@@ -42,7 +42,6 @@ let
           })
         )
         {
-          tree-sitter-language-pack = [ zstd ];
           primp = [
             aws-lc
             zstd
@@ -131,20 +130,31 @@ let
     ];
   };
 
+  # Upstream pins tree-sitter-language-pack 1.13.3 and imports `PackConfig`,
+  # which nixpkgs' 1.4.1 lacks.
+  tree-sitter-language-pack = mkWheel {
+    pname = "tree-sitter-language-pack";
+    version = "1.13.3";
+    url = "https://files.pythonhosted.org/packages/6e/f8/bfb863ffd53eb888308ffebeb9f73ed24bda0eac10393b9ec1b6774abe06/tree_sitter_language_pack-1.13.3-cp310-abi3-manylinux_2_34_x86_64.whl";
+    hash = "sha256-682PqUNf+Va9gu7qIfSS+yzP79m+kJ/lzeuruJLEsDQ=";
+    deps = with py; [ tree-sitter ];
+    binary = true;
+  };
+
   # The vendored `openviking_cli` shim subclasses `openviking_sdk.AsyncHTTPClient`
   # via a lazy import that pythonImportsCheck misses; without the SDK the
   # server dies on the first session import.
   openviking-sdk = mkWheel {
     pname = "openviking-sdk";
-    version = "0.1.9";
-    url = "https://files.pythonhosted.org/packages/47/d6/aa82551f9c5d06ce682b9194c784beeb16478ce103d650ed8e8b487b1aa7/openviking_sdk-0.1.9-py3-none-any.whl";
-    hash = "sha256-YFfzq5Ic7kaXp7QklINHZpy3uOBEOfMFUD2KtxMq884=";
+    version = "0.1.20";
+    url = "https://files.pythonhosted.org/packages/2c/95/c05a33be342ce1fada86874029d69ac67772a55afdad9c80dda1763bafcc/openviking_sdk-0.1.20-py3-none-any.whl";
+    hash = "sha256-70H2/HeHqUudeoZxC5uUh8dNVTx+9b/I5GNlaZKNGVs=";
     deps = with py; [ httpx ];
   };
 in
 py.buildPythonApplication (finalAttrs: {
   pname = "openviking-server";
-  version = "0.5.2.1";
+  version = "0.5.5";
   format = "wheel";
 
   # fetchPypi so nix-update can repin the hash from just the version. The PyPI
@@ -157,7 +167,7 @@ py.buildPythonApplication (finalAttrs: {
     python = "cp310";
     abi = "abi3";
     platform = "manylinux_2_31_x86_64";
-    hash = "sha256-6Lc6v8oc60XFin+SsY6ZKbs61hHT/WFCJlq+elNIgMw=";
+    hash = "sha256-fQ1q2BGaR5CSIMcj9XaSX1eKfsRD8PC+pTIZpUBMLNQ=";
   };
 
   nativeBuildInputs = [ autoPatchelfHook ];
@@ -174,6 +184,7 @@ py.buildPythonApplication (finalAttrs: {
     lark-oapi
     opentelemetry-instrumentation-asyncio
     openviking-sdk
+    tree-sitter-language-pack
   ]
   ++ (with py; [
     pydantic
@@ -205,12 +216,12 @@ py.buildPythonApplication (finalAttrs: {
     litellm
     python-multipart
     tree-sitter
-    tree-sitter-language-pack
     opentelemetry-api
     opentelemetry-sdk
     opentelemetry-exporter-otlp-proto-grpc
     opentelemetry-exporter-otlp-proto-http
     loguru
+    prometheus-client
     cryptography
     argon2-cffi
     # Upstream pins mcp>=1.27,<2 (volcengine/OpenViking#3600; v0.5.3 too)
