@@ -90,13 +90,13 @@ let
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "lazylibrarian";
-  version = "0-unstable-2026-11-07";
+  version = "0-unstable-2026-11-14";
 
   src = fetchFromGitLab {
     owner = "LazyLibrarian";
     repo = "LazyLibrarian";
-    rev = "8b6ba44398f6c74c4dd29b13dc2047b771e27488";
-    hash = "sha256-BMScDw1KHmkc8pT586upBQM6bCPiqmrAc7fwJPhWHyY=";
+    rev = "7ce02b7e063dcebc656eea1eb7a225750b700d6d";
+    hash = "sha256-Plos+rncwaEawMH0/oubNjk1BN9Z2HIxOBTXs5nMRXA=";
   };
 
   nativeBuildInputs = [ makeWrapper ];
