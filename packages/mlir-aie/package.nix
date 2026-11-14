@@ -17,9 +17,10 @@
 }:
 
 let
-  # aiecc imports aie.extras, which the wheel does not ship: upstream installs
-  # it from the commit in python/requirements_extras.txt (bump with the wheel)
-  # with HOST_MLIR_PYTHON_PACKAGE_PREFIX=aie. Pure Python.
+  # The bindings import aie.extras.dialects, which the wheel does not ship.
+  # Since 1.4 upstream installs eudsl-python-extras (python/requirements.txt)
+  # instead of this fork; this older copy still provides the modules
+  # aie.iron imports. Pure Python.
   mlirPythonExtras = fetchFromGitHub {
     owner = "erwei-xilinx";
     repo = "mlir-python-extras";
@@ -29,7 +30,7 @@ let
 
   # The wheel's Requires-Dist (minus the `dataclasses` backport) plus what
   # aie.extras needs. nixpkgs only has numpy 2 (wheel asks < 2); the bindings
-  # import and aiecc runs with it (see installCheckPhase).
+  # import with it.
   python = python312.withPackages (
     ps: with ps; [
       pyyaml
@@ -44,11 +45,11 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "mlir-aie";
-  version = "1.1.4";
+  version = "1.4.5";
 
   src = fetchurl {
     url = "https://github.com/Xilinx/mlir-aie/releases/download/v${finalAttrs.version}/mlir_aie-${finalAttrs.version}-cp312-cp312-manylinux_2_35_x86_64.whl";
-    hash = "sha256-zjuN9QVPcVrMRgXrWkSZ3ewU+hG4USzgVV3Z6/uRQlU=";
+    hash = "sha256-25WILqxxo5kNUbrhX6EeB+uL+FSO00OOwwl19MGiOSs=";
   };
 
   nativeBuildInputs = [
@@ -78,8 +79,8 @@ stdenv.mkDerivation (finalAttrs: {
     cp -r --no-clobber ${mlirPythonExtras}/mlir/extras/. $site/mlir_aie/python/aie/extras/
     chmod -R u+w $site/mlir_aie/python/aie/extras
 
-    # aiecc.py and txn2mlir.py import `aie`, found only via aie.pth when
-    # site-packages is a site dir; run them with an interpreter that has the
+    # txn2mlir.py imports `aie`, found only via aie.pth when
+    # site-packages is a site dir; run it with an interpreter that has the
     # wheel's dependencies, PYTHONPATH and the native tools on PATH.
     mkdir -p $out/bin
     for tool in $site/mlir_aie/bin/*; do
@@ -101,8 +102,8 @@ stdenv.mkDerivation (finalAttrs: {
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
-    $out/bin/aiecc.py --help >/dev/null
-    $out/bin/aiecc.py --version
+    $out/bin/aiecc --help >/dev/null
+    $out/bin/aiecc --version
     $out/bin/txn2mlir.py --help >/dev/null
     runHook postInstallCheck
   '';
@@ -112,7 +113,7 @@ stdenv.mkDerivation (finalAttrs: {
     updateScript = nix-update-script { };
   };
 
-  # Only the aiecc.py / txn2mlir.py wrappers get the Python dependencies;
+  # Only the txn2mlir.py wrapper gets the Python dependencies;
   # importing `aie` (incl. aie.iron) elsewhere needs mlir_aie/python on
   # PYTHONPATH and the same packages.
   meta = {
