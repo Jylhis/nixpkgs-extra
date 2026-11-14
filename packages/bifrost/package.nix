@@ -11,13 +11,13 @@
 }:
 
 let
-  version = "2.3.2";
+  version = "2.5.1";
 
   src = fetchFromGitHub {
     owner = "maximhq";
     repo = "bifrost";
     tag = "transports/v${version}";
-    hash = "sha256-qkAn7D/fZkCumpwjD11gSF5MSUKZqQ2/HojYxJJJcCg=";
+    hash = "sha256-FLSJpgb1NOmHpKmui+1CSK2wrZfJlNO+4SW9xLT8zpc=";
   };
 
   # Static Next.js export, embedded into the Go binary. Mirrors upstream's
@@ -26,7 +26,7 @@ let
     pname = "bifrost-ui";
     inherit version src;
     sourceRoot = "source/ui";
-    npmDepsHash = "sha256-sH7vaaCBRLSwDUNj/C1mwQtaQ+1Ft8AJkILHnugkceQ=";
+    npmDepsHash = "sha256-JtaSXBfz7toZ8gF9Jjq5iveV/b5obQNhA9VvjyvDky0=";
 
     # next/font/google needs network at build time; drop it from the layout.
     postPatch = ''
@@ -75,7 +75,7 @@ buildGo127Module {
 
   modRoot = "transports";
   subPackages = [ "bifrost-http" ];
-  vendorHash = "sha256-0OOMOiJyFwf5tbS7uhfsIjlcLHZh/ob3xyRSudMTSIg=";
+  vendorHash = "sha256-E2yf3kPdISr9VdQvPhjjcJrruqDdWe1ZFP0FI7+fRvc=";
 
   postPatch = localModules;
   overrideModAttrs = _: {
