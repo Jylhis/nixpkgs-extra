@@ -108,7 +108,7 @@ jobs:
       # A multi-user install: nix-eval-jobs from nixpkgs links a newer Nix
       # than the runner's, and without a daemon it waits forever for an
       # exclusive store lock to migrate the database. It also enables KVM.
-      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
         with:
           # One build at a time, so two heavy builds never share the memory.
           # Build directories go on the /nix volume too, not /tmp on /.
